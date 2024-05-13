@@ -14,10 +14,7 @@ from datetime import datetime
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('DISCORD_GUILD')
-intents = discord.Intents.default()
-intents.presences = True
-intents.members = True
-intents.message_content = True
+intents = discord.Intents.all()
 bot = commands.Bot(command_prefix='.', intents=intents)  # prefix our commands with '.'
 
 players = {}
@@ -102,8 +99,11 @@ async def clear(ctx, amount=5):
 
 @bot.command()
 async def leave(ctx):
-    channel = ctx.message.author.voice.channel
     voice = get(bot.voice_clients, guild=ctx.guild)
+
+    if voice.is_playing():
+        voice.stop()
+        await ctx.send('Stopping...')
     voiceClient = ctx.voice_client
     await voiceClient.disconnect()
 
