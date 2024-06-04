@@ -28,7 +28,7 @@ At the [Discord developer portal](https://discord.com/developers/applications):
   
 #### Bot Token
 Go generate and/or find your bot token at the [Discord developer portal](https://discord.com/developers/applications).  
-  Find the token in the **Bot** section, accesible from the left side of the page.
+  Find the token in the **Bot** section, accesible from the left side of the page.  
   Copy that token and paste it in the .env file after the ``DISCORD_TOKEN=``
 
 ### Press Start!
