@@ -19,6 +19,7 @@ client = discord.Client(intents=intents)
 slash = app_commands.CommandTree(client, fallback_to_global=True)
 last_message = None
 last_url = None
+queue = []
 
 class Buttons(discord.ui.View):
     def __init__(self, timeout=180):
@@ -67,11 +68,15 @@ class Buttons(discord.ui.View):
         if voice.is_playing():
             print("Stopping...")
             voice.stop()
-            embed = discord.Embed(title="Stopped", url=last_url, description=f"Music was stopped by **{ctx.user}**",
-                                  color=discord.Color.blue())
-            await last_message.edit(embed=embed, delete_after=120, view=None)
-            await ctx.response.send_message(content="Music has stopped!", ephemeral=True)
-            return
+            if last_message is None:
+                await ctx.response.send_message(content="Sound has stopped!", ephemeral=True)
+                return
+            else:
+                embed = discord.Embed(description=f"[Music]({last_url}) was stopped by **{ctx.user.mention}**",
+                                      color=discord.Color.blue())
+                await last_message.edit(embed=embed, delete_after=120, view=None)
+                await ctx.response.send_message(content="Music has stopped!", ephemeral=True)
+                return
         else:
             print("Stopping... But no music was playing.")
             await ctx.response.send_message(content="No music is playing!", ephemeral=True)
@@ -94,7 +99,7 @@ async def join(ctx: discord.Interaction):
     else:
         await ctx.response.send_message(content="Something went wrong...", ephemeral=True, delete_after=15)'''
 
-@slash.command(name="play", description="Plays a YouTube video audio in your voice channel", nsfw=False, guild=None)
+@slash.command(name="play", description="Plays music in your voice channel", nsfw=False, guild=None)
 async def play(ctx: discord.Interaction, url: str):
     global skip
     global last_message
@@ -152,10 +157,16 @@ async def play(ctx: discord.Interaction, url: str):
         last_message = await ctx.channel.send(embed=embed, delete_after=600, view=Buttons())
         last_url = url
 
-async def sounds(current: str) -> list[app_commands.Choice[str]]:
+async def sounds(
+    interaction: discord.Interaction,
+    current: str,
+) -> list[app_commands.Choice[str]]:
     dir_path = 'C:/Users/joema/PycharmProjects/Journey Bot/sfx'
     sfx = [os.path.splitext(f)[0] for f in os.listdir(dir_path) if os.path.isfile(os.path.join(dir_path, f))]
-    return [app_commands.Choice(name=sfx, value=sfx)for sfx in sfx if current.lower() in sfx.lower()]
+    return [
+        app_commands.Choice(name=sfx, value=sfx)
+        for sfx in sfx if current.lower() in sfx.lower()
+    ]
 
 @slash.command(name="sfx", description="Plays a sound effect in your voice channel", nsfw=False, guild=None)
 @app_commands.autocomplete(sfx=sounds)
@@ -188,6 +199,9 @@ async def sfx(ctx: discord.Interaction, sfx: str):
 
     if voice.is_playing():
         await ctx.response.send_message(content="There's already something playing!", ephemeral=True, delete_after=5)
+    if not voice.is_connected():
+        while not voice.is_connected():
+            await asyncio.sleep(1)
 
     # sfx check
     try:
@@ -198,7 +212,7 @@ async def sfx(ctx: discord.Interaction, sfx: str):
         }
         print(f"{ctx.user.name}({ctx.user.id}) is playing sfx {sfx} in {ctx.user.voice.channel.name}({ctx.user.voice.channel.id})")
         await ctx.response.send_message(content=f"Playing sfx: **{sfx}**", ephemeral=True, delete_after=5)
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(1)
         voice.play(FFmpegPCMAudio(source=f'C:/Users/joema/PycharmProjects/Journey Bot/sfx/{sfx}.mp3', executable='ffmpeg.exe', before_options=FFMPEG_OPTIONS))
         voice.is_playing()
         last_message = None
@@ -216,7 +230,7 @@ async def on_voice_state_update(member, before, after):
             voice.stop()
 
 # command to resume voice if it is paused
-@slash.command(name="resume", description="Resumes music playback", nsfw=False, guild=None)
+@slash.command(name="resume", description="Resumes playback", nsfw=False, guild=None)
 async def resume(ctx: discord.Interaction):
     try:
         channel = ctx.user.voice.channel
@@ -234,8 +248,21 @@ async def resume(ctx: discord.Interaction):
             voice.resume()
             await ctx.response.send_message(content="Resumed!", ephemeral=True)
 
+@slash.command(name="embed", description="Create and send an embed in the current channel!", nsfw=False, guild=None)
+async def embed(ctx: discord.Interaction, title: str, description: str, url: str, color: str):
+    if not ctx.user.guild_permissions.manage_messages:
+        ctx.response.send_message("You need the **Manage Messages** permission to send embeds!", ephemeral=True)
+    if title is None:
+        title = "Title"
+    if description is None:
+        description = "Description"
+    if color is None:
+        color = "#FFFFFF"
+    embed = discord.Embed(title=title, description=description, url=url, color=color)
+    ctx.response.send_message(embed=embed)
+
 # command to pause voice if it is playing
-@slash.command(name="pause", description="Pauses music playback", nsfw=False, guild=None)
+@slash.command(name="pause", description="Pauses playback", nsfw=False, guild=None)
 async def pause(ctx: discord.Interaction):
     try:
         channel = ctx.user.voice.channel
@@ -258,7 +285,7 @@ async def mystery(ctx: discord.Interaction):
     await ctx.response.send_message(content="https://tenor.com/view/huh-cat-huh-m4rtin-huh-huh-meme-what-cat-gif-13719248636774070662", ephemeral=True)
 
 # command to stop voice
-@slash.command(name="stop", description="Stops music or sound playback", nsfw=False, guild=None)
+@slash.command(name="stop", description="Stops playback", nsfw=False, guild=None)
 async def stop(ctx: discord.Interaction):
     try:
         channel = ctx.user.voice.channel
@@ -340,19 +367,19 @@ async def score(ctx: discord.Interaction, member: discord.Member):
     else:  # the command is used in a guild
         if member is None:
             member = ctx.user
-        user = member.name
+        user = member.display_name
         count = waffles_counter.get(user, 0)
-        print(f"{ctx.user} requested score for {member}, in guild {ctx.guild}")
+        print(f"{ctx.user}({ctx.user.id}) requested score for: {member}({member.id}), in guild: {ctx.guild}({ctx.guild.id})")
         await ctx.response.send_message(content=f'{user} has said the n-word {count} times(s)', silent=True)
 
 @slash.command(name="leaderboard", description="Displays the top five users with the highest score", nsfw=False, guild=None)
 async def leaderboard(ctx: discord.Interaction):
     leaderboard = sorted(waffles_counter.items(), key=itemgetter(1), reverse=True)[:5]
     if ctx.guild is None: #It's used in a dm
-        print(f"{ctx.user} requested a leaderboard in a dm.")
+        print(f"{ctx.user}({ctx.user.id}) requested a leaderboard in a dm.")
         await ctx.response.send_message(content='Use this command in a server!')
     else:
-        print(f"{ctx.user} requested leaderboard for guild {ctx.guild}")
+        print(f"{ctx.user}({ctx.user.id}) requested leaderboard for guild {ctx.guild}({ctx.guild.id})")
         await ctx.response.send_message(content="**Leaderboard**")
         for i, (key, value) in enumerate(leaderboard, start=1):
             await ctx.channel.send(f'{i}. {key} has said the n-word {value} time(s)')
