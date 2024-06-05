@@ -11,7 +11,7 @@ I'll be using PyCharm for this guide.
 #### You can't run it without these
 Press ALT+F12 to open up the console.  
 Paste in this and click enter:
-``pip install discord.py os yt-dlp itertools asyncio``
+``pip install discord.py os yt-dlp itertools asyncio matplotlib``
 
 ### Configure and Provide Token
 #### Configuration
