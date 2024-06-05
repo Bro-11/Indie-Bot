@@ -9,6 +9,8 @@ from itertools import islice
 from datetime import datetime
 import json, random, asyncio
 from operator import itemgetter
+import matplotlib.colors as mcolors
+
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -19,7 +21,6 @@ client = discord.Client(intents=intents)
 slash = app_commands.CommandTree(client, fallback_to_global=True)
 last_message = None
 last_url = None
-queue = []
 
 class Buttons(discord.ui.View):
     def __init__(self, timeout=180):
@@ -104,7 +105,6 @@ async def play(ctx: discord.Interaction, url: str):
     global skip
     global last_message
     global last_url
-    global queue
     #Joining vc
     try:
         channel = ctx.user.voice.channel
@@ -124,19 +124,17 @@ async def play(ctx: discord.Interaction, url: str):
     if "youtube.com" in url or "soundcloud.com" in url or "youtu.be" in url:
         url = url
     else:
-        print(f"{ctx.user} provided an invalid link ({url})")
+        print(f"{ctx.user}({ctx.user.id}) provided an invalid link ({url})")
         await ctx.response.send_message(content="That doesn't look like a YouTube or SoundCloud link!", ephemeral=True)
         return
 
     if voice.is_playing():
-        print(f"{ctx.user} requested url: {url}, added to queue. New queue: {queue}")
-        await ctx.response.send_message(content=f"There's already something playing!\nI've added it to the queue at position WIP.", ephemeral=True)
-        queue.insert(len(queue), url)
+        print(f"{ctx.user}({ctx.user.id}) requested url: {url}, but there was something already playing!")
+        await ctx.response.send_message(content=f"There's already something playing!\nUse ``/stop`` to play something else!", ephemeral=True)
         return
     else:
         print(f"{ctx.user} started playing url: {url} in vc {ctx.user.voice.channel.name}")
         await ctx.response.send_message(content="Music is starting...", ephemeral=True)
-        queue.insert(len(queue), url)
 
         YDL_OPTIONS = {'format': 'bestaudio', 'noplaylist': 'True'}
         FFMPEG_OPTIONS = {
@@ -178,7 +176,7 @@ async def sfx(ctx: discord.Interaction, sfx: str):
     try:
         channel = ctx.user.voice.channel
     except AttributeError:
-        print(f"{ctx.user} tried to play sfx: {sfx}.mp3, but wasn't in a vc.")
+        print(f"{ctx.user}({ctx.user.id}) tried to play sfx: {sfx}.mp3, but wasn't in a vc.")
         await ctx.response.send_message(content="You aren't in a voice channel!", ephemeral=True, delete_after=5)
         return
 
@@ -199,6 +197,7 @@ async def sfx(ctx: discord.Interaction, sfx: str):
 
     if voice.is_playing():
         await ctx.response.send_message(content="There's already something playing!", ephemeral=True, delete_after=5)
+        print(f"{ctx.user}({ctx.user.id}) tried to play a sound, but one was already playing!")
     if not voice.is_connected():
         while not voice.is_connected():
             await asyncio.sleep(1)
@@ -219,6 +218,7 @@ async def sfx(ctx: discord.Interaction, sfx: str):
         last_url = None
     except FileNotFoundError:
         await ctx.response.send_message(content=f"No sfx exists for **{sfx}**!", ephemeral=True, delete_after=5)
+        print(f"{ctx.user}({ctx.user.id}) requested an invalid sound: {sfx}")
 
 @client.event
 async def on_voice_state_update(member, before, after):
@@ -236,30 +236,39 @@ async def resume(ctx: discord.Interaction):
         channel = ctx.user.voice.channel
     except AttributeError:
         await ctx.response.send_message(content="You aren't in a voice channel!", ephemeral=True)
+        print(f"{ctx.user}({ctx.user.id}) tried resuming, but wasn't in a vc.")
         return
     voice = ctx.user.guild.voice_client
 
     if voice.is_playing():
         if last_message is None:
             await ctx.response.send_message(content="You can't resume sounds!", ephemeral=True)
+            print(f"{ctx.user}({ctx.user.id}) tried resuming a sound.")
             return
         else:
-            print("Resuming...")
+            print(f"{ctx.user}({ctx.user.id}) resumed the music.")
             voice.resume()
             await ctx.response.send_message(content="Resumed!", ephemeral=True)
+    else:
+        await ctx.response.send_message(content="There's nothing playing!", ephemeral=True)
+        print(f"{ctx.user}({ctx.user.id}) used resume command but nothing was playing.")
+
+def getColorInt(name):
+    rgb = mcolors.to_rgb(name)
+    return (int(rgb[0]*255) << 16) | (int(rgb[1]*255) << 8) | int(rgb[2]*255)
 
 @slash.command(name="embed", description="Create and send an embed in the current channel!", nsfw=False, guild=None)
-async def embed(ctx: discord.Interaction, title: str, description: str, url: str, color: str):
+async def embed(ctx: discord.Interaction=None, title: str="Title", description: str="Description", url: str=None, color: str="white", image_url: str=None):
     if not ctx.user.guild_permissions.manage_messages:
         ctx.response.send_message("You need the **Manage Messages** permission to send embeds!", ephemeral=True)
-    if title is None:
-        title = "Title"
-    if description is None:
-        description = "Description"
-    if color is None:
-        color = "#FFFFFF"
-    embed = discord.Embed(title=title, description=description, url=url, color=color)
-    ctx.response.send_message(embed=embed)
+        print(f"{ctx.user}({ctx.user.id}) lacked the permissions to send this embed: {title}, {description}, {url}, {color}")
+    try:
+        color = getColorInt(color.lower())
+    except:
+        ctx.response.send_message("I couldn't find that color!!", ephemeral=True)
+    embed = discord.Embed(title=title, description=description, url=url, color=color).set_image(url=image_url)
+    await ctx.response.send_message(embed=embed)
+    print(f"{ctx.user}({ctx.user.id}) sent this embed: {title}, {description}, {url}, {color}")
 
 # command to pause voice if it is playing
 @slash.command(name="pause", description="Pauses playback", nsfw=False, guild=None)
@@ -268,20 +277,26 @@ async def pause(ctx: discord.Interaction):
         channel = ctx.user.voice.channel
     except AttributeError:
         await ctx.response.send_message(content="You aren't in a voice channel!", ephemeral=True)
+        print(f"{ctx.user}({ctx.user.id}) tried to pause, but wasn't in a vc.")
         return
     voice = ctx.user.guild.voice_client
 
     if voice.is_playing():
         if last_message is None:
             await ctx.response.send_message(content="You can't pause sounds!", ephemeral=True)
+            print(f"{ctx.user}({ctx.user.id}) tried to pause a sound")
             return
         else:
-            print("Pausing...")
+            print(f"{ctx.user}({ctx.user.id}) paused music.")
             voice.pause()
             await ctx.response.send_message(content="Paused!", ephemeral=True)
+    else:
+        await ctx.response.send_message(content="There's nothing playing!", ephemeral=True)
+        print(f"{ctx.user}({ctx.user.id}) paused, but nothing was playing.")
 
 @slash.command(name="huh", nsfw=False, guild=None)
 async def mystery(ctx: discord.Interaction):
+    print(f"{ctx.user}({ctx.user.id}) used the huh command")
     await ctx.response.send_message(content="https://tenor.com/view/huh-cat-huh-m4rtin-huh-huh-meme-what-cat-gif-13719248636774070662", ephemeral=True)
 
 # command to stop voice
@@ -291,6 +306,7 @@ async def stop(ctx: discord.Interaction):
         channel = ctx.user.voice.channel
     except AttributeError:
         await ctx.response.send_message(content="You aren't in a voice channel!", ephemeral=True)
+        print(f"{ctx.user}({ctx.user.id}) used stop command but wasn't in a vc!")
         return
 
     voice = ctx.user.guild.voice_client
@@ -302,14 +318,16 @@ async def stop(ctx: discord.Interaction):
         voice.stop()
         if last_message is None:
             await ctx.response.send_message(content="Sound has stopped!", ephemeral=True)
+            print(f"{ctx.user}({ctx.user.id}) stopped a sound.")
             return
         else:
             embed = discord.Embed(description=f"[Music]({last_url}) was stopped by **{ctx.user.mention}**",                color=discord.Color.blue())
             await last_message.edit(embed=embed, delete_after=120, view=None)
             await ctx.response.send_message(content="Music has stopped!", ephemeral=True)
+            print(f"{ctx.user}({ctx.user.id}) stopped the music.")
             return
     else:
-        print("Stopping... But no music was playing.")
+        print(f"{ctx.user}({ctx.user.id}) used stop command but no music was playing.")
         await ctx.response.send_message(content="No music is playing!", ephemeral=True)
 
 '''@slash.command(name="skip", description="Skips the current song", nsfw=False, guild=None)
@@ -352,7 +370,7 @@ async def on_message(message):
     if NWORD in message.content.lower():
         count =  message.content.lower().count(NWORD)
         user = message.author.name
-        print(f"{message.author} said the n-word.")
+        print(f"{message.author}({message.author.id}) said the n-word.")
         if user in waffles_counter:
             waffles_counter[user] += count
         else:
