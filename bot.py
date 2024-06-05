@@ -11,7 +11,6 @@ import json, random, asyncio
 from operator import itemgetter
 import matplotlib.colors as mcolors
 
-
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('DISCORD_GUILD')
@@ -166,6 +165,7 @@ async def sounds(
         for sfx in sfx if current.lower() in sfx.lower()
     ]
 
+# Remember to create a folder in the same folder as bot.py named sfx
 @slash.command(name="sfx", description="Plays a sound effect in your voice channel", nsfw=False, guild=None)
 @app_commands.autocomplete(sfx=sounds)
 async def sfx(ctx: discord.Interaction, sfx: str):
@@ -186,14 +186,6 @@ async def sfx(ctx: discord.Interaction, sfx: str):
             voice.move_to(channel=channel)
     else:
         voice = await channel.connect()
-
-    '''try:
-        print("VC")
-        voice = ctx.user.guild.voice_client
-        await voice.move_to(channel)
-    except:
-        print("Connecting VC")
-        voice = channel.connect()'''
 
     if voice.is_playing():
         await ctx.response.send_message(content="There's already something playing!", ephemeral=True, delete_after=5)
@@ -329,31 +321,6 @@ async def stop(ctx: discord.Interaction):
     else:
         print(f"{ctx.user}({ctx.user.id}) used stop command but no music was playing.")
         await ctx.response.send_message(content="No music is playing!", ephemeral=True)
-
-'''@slash.command(name="skip", description="Skips the current song", nsfw=False, guild=None)
-async def skip(ctx: discord.Interaction):
-    global skip
-    try:
-        channel = ctx.user.voice.channel
-    except AttributeError:
-        await ctx.response.send_message(content="You aren't in a voice channel!", ephemeral=True)
-        return
-
-    voice = ctx.user.guild.voice_client
-
-    guild_id = ctx.guild.id
-
-    if voice.is_playing():
-        print("Skipping...")
-        skip = True
-        embed = discord.Embed(description=f"[Song]({last_url} was skipped by **{ctx.user.mention}**", color=discord.Color.blue())
-        await last_message.edit(embed=embed, delete_after=120, view=None)
-        await ctx.response.send_message(content="Skipped!", ephemeral=True)
-        return
-    else:
-        print("Skipping... But no music was playing.")
-        await ctx.response.send_message(content="No music is playing!", ephemeral=True)
-'''
 
 try:
     with open('waffles_counter.json', 'r') as f:
