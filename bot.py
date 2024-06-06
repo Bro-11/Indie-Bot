@@ -252,13 +252,18 @@ def getColorInt(name):
 @slash.command(name="embed", description="Create and send an embed in the current channel!", nsfw=False, guild=None)
 async def embed(ctx: discord.Interaction=None, title: str="Title", description: str="Description", url: str=None, color: str="white", image_url: str=None):
     if not ctx.user.guild_permissions.manage_messages:
-        ctx.response.send_message("You need the **Manage Messages** permission to send embeds!", ephemeral=True)
+        await ctx.response.send_message("You need the **Manage Messages** permission to send embeds!", ephemeral=True)
         print(f"{ctx.user}({ctx.user.id}) lacked the permissions to send this embed: {title}, {description}, {url}, {color}")
-    try:
-        color = getColorInt(color.lower())
-    except:
-        ctx.response.send_message("I couldn't find that color!!", ephemeral=True)
-    embed = discord.Embed(title=title, description=description, url=url, color=color).set_image(url=image_url)
+        return
+    if color.isdigit():
+        embed_color = int(color)
+    else:
+        try:
+            embed_color = getColorInt(color.lower())
+        except:
+            await ctx.response.send_message("I couldn't find that color!!", ephemeral=True)
+            return
+    embed = discord.Embed(title=title, description=description, url=url, color=embed_color).set_image(url=image_url)
     await ctx.response.send_message(embed=embed)
     print(f"{ctx.user}({ctx.user.id}) sent this embed: {title}, {description}, {url}, {color}")
 
