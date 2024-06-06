@@ -31,13 +31,22 @@ class Buttons(discord.ui.View):
             channel = ctx.user.voice.channel
         except AttributeError:
             await ctx.response.send_message(content="You aren't in a voice channel!", ephemeral=True)
+            print(f"{ctx.user}({ctx.user.id}) tried to pause with a button, but wasn't in a vc.")
             return
         voice = ctx.user.guild.voice_client
 
         if voice.is_playing():
-            print("Pausing...")
-            voice.pause()
-            await ctx.response.send_message(content="Paused!", ephemeral=True)
+            if last_message is None:
+                await ctx.response.send_message(content="You can't pause sounds!", ephemeral=True)
+                print(f"{ctx.user}({ctx.user.id}) tried to pause a sound with a button.")
+                return
+            else:
+                print(f"{ctx.user}({ctx.user.id}) paused music with a button.")
+                voice.pause()
+                await ctx.response.send_message(content="Paused!", ephemeral=True)
+        else:
+            await ctx.response.send_message(content="There's nothing playing!", ephemeral=True)
+            print(f"{ctx.user}({ctx.user.id}) paused with a button, but nothing was playing.")
 
     @discord.ui.button(label="Resume", disabled=False, style=discord.ButtonStyle.primary)
     async def resume_button(self, ctx: discord.Interaction, button=discord.ui.button):
@@ -45,13 +54,22 @@ class Buttons(discord.ui.View):
             channel = ctx.user.voice.channel
         except AttributeError:
             await ctx.response.send_message(content="You aren't in a voice channel!", ephemeral=True)
+            print(f"{ctx.user}({ctx.user.id}) tried resuming with a button, but wasn't in a vc.")
             return
         voice = ctx.user.guild.voice_client
 
-        if not voice.is_playing():
-            print("Resuming...")
-            voice.resume()
-            await ctx.response.send_message(content="Resumed!", ephemeral=True)
+        if voice.is_playing():
+            if last_message is None:
+                await ctx.response.send_message(content="You can't resume sounds!", ephemeral=True)
+                print(f"{ctx.user}({ctx.user.id}) tried resuming a sound with a button.")
+                return
+            else:
+                print(f"{ctx.user}({ctx.user.id}) resumed the music with a button.")
+                voice.resume()
+                await ctx.response.send_message(content="Resumed!", ephemeral=True)
+        else:
+            await ctx.response.send_message(content="There's nothing playing!", ephemeral=True)
+            print(f"{ctx.user}({ctx.user.id}) used resume button but nothing was playing.")
 
     @discord.ui.button(label="Stop", disabled=False, style=discord.ButtonStyle.danger)
     async def stop_button(self, ctx: discord.Interaction, button=discord.ui.button):
@@ -59,6 +77,7 @@ class Buttons(discord.ui.View):
             channel = ctx.user.voice.channel
         except AttributeError:
             await ctx.response.send_message(content="You aren't in a voice channel!", ephemeral=True)
+            print(f"{ctx.user}({ctx.user.id}) used stop button but wasn't in a vc!")
             return
 
         voice = ctx.user.guild.voice_client
@@ -70,15 +89,17 @@ class Buttons(discord.ui.View):
             voice.stop()
             if last_message is None:
                 await ctx.response.send_message(content="Sound has stopped!", ephemeral=True)
+                print(f"{ctx.user}({ctx.user.id}) stopped a sound with a button.")
                 return
             else:
                 embed = discord.Embed(description=f"[Music]({last_url}) was stopped by **{ctx.user.mention}**",
                                       color=discord.Color.blue())
                 await last_message.edit(embed=embed, delete_after=120, view=None)
                 await ctx.response.send_message(content="Music has stopped!", ephemeral=True)
+                print(f"{ctx.user}({ctx.user.id}) stopped the music with a button.")
                 return
         else:
-            print("Stopping... But no music was playing.")
+            print(f"{ctx.user}({ctx.user.id}) used stop button but no music was playing.")
             await ctx.response.send_message(content="No music is playing!", ephemeral=True)
 
 @slash.command(name="play", description="Plays music in your voice channel", nsfw=False, guild=None)
@@ -247,7 +268,7 @@ async def embed(ctx: discord.Interaction=None, title: str=None, description: str
             return
     embed = discord.Embed(title=title, description=description, url=url, color=embed_color).set_image(url=image_url)
     await ctx.response.send_message(embed=embed)
-    print(f"{ctx.user}({ctx.user.id}) sent this embed: {title}, {description}, {url}, {color}")
+    print(f"{ctx.user}({ctx.user.id}) sent this embed: {title}, {description}, {url}, {color}, {image_url}")
 
 # command to pause voice if it is playing
 @slash.command(name="pause", description="Pauses playback", nsfw=False, guild=None)
