@@ -9,4 +9,4 @@ You can find the setup guide [here](setup.md)!
 If you find any issues, suggestions, etc, please don't hesitate to [make an issue](https://github.com/Bro-11/Indie-Bot/issues/new)!
 
 # Support
-![https://discord.gg/vxErj6xmpJ](/discord.png)
+![/discord.png](https://discord.gg/vxErj6xmpJ)
