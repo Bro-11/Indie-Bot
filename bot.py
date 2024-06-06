@@ -81,24 +81,6 @@ class Buttons(discord.ui.View):
             print("Stopping... But no music was playing.")
             await ctx.response.send_message(content="No music is playing!", ephemeral=True)
 
-'''# command to play sound from a youtube URL
-@slash.command(name="join", description="Joins your voice channel", nsfw=False, guild=None)
-async def join(ctx: discord.Interaction):
-    try:
-        channel = ctx.user.voice.channel
-    except AttributeError:
-        print(f"{ctx.user} requested the bot, but wasn't in a vc.")
-        await ctx.response.send_message(content="You aren't in a voice channel!", ephemeral=True, delete_after=5)
-        return
-    voice = await channel.connect()
-
-    if voice.is_connected():
-        print(f"Bot joined {ctx.user}'s voice channel: {ctx.user.voice.channel.name}({ctx.user.voice.channel.id}) in guild: {ctx.user.guild.name}({ctx.user.guild.id})")
-        await voice.move_to(channel=channel)
-        await ctx.response.send_message(content="Connected to your vc!", ephemeral=True, delete_after=5)
-    else:
-        await ctx.response.send_message(content="Something went wrong...", ephemeral=True, delete_after=15)'''
-
 @slash.command(name="play", description="Plays music in your voice channel", nsfw=False, guild=None)
 async def play(ctx: discord.Interaction, url: str):
     global skip
@@ -250,7 +232,7 @@ def getColorInt(name):
     return (int(rgb[0]*255) << 16) | (int(rgb[1]*255) << 8) | int(rgb[2]*255)
 
 @slash.command(name="embed", description="Create and send an embed in the current channel!", nsfw=False, guild=None)
-async def embed(ctx: discord.Interaction=None, title: str="Title", description: str="Description", url: str=None, color: str="white", image_url: str=None):
+async def embed(ctx: discord.Interaction=None, title: str=None, description: str=None, url: str=None, color: str="white", image_url: str=None):
     if not ctx.user.guild_permissions.manage_messages:
         await ctx.response.send_message("You need the **Manage Messages** permission to send embeds!", ephemeral=True)
         print(f"{ctx.user}({ctx.user.id}) lacked the permissions to send this embed: {title}, {description}, {url}, {color}")
