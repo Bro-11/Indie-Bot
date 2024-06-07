@@ -251,13 +251,13 @@ async def play(ctx: discord.Interaction, url: str):
             while not voice.is_connected():
                 await asyncio.sleep(1)
 
-        #Actually playing music
+        '''#Actually playing music
         if "youtube.com" in url or "soundcloud.com" in url or "youtu.be" in url:
             url = url
         else:
             print(f"{ctx.user}({ctx.user.id}) provided an invalid link ({url})")
             await ctx.response.send_message(content="That doesn't look like a YouTube or SoundCloud link!", ephemeral=True)
-            return
+            return'''
 
         if voice.is_playing():
             print(f"{ctx.user}({ctx.user.id}) requested url: {url}, but there was something already playing!")
@@ -389,7 +389,7 @@ async def on_ready():
     async def before_update_roles():
         await client.wait_until_ready()
         await slash.sync()
-        games = ["with a slinky", "Minecraft and griefing Gabe's house", "Overwatch and losing", "with a rubiks cube", "soccer with an ice cube", "tic-tac-toe with ice", "Titanfall 3", "Half Life 3: Part 2", "Team Fortress 3", "Super Smash Bros Ultimate", "signs at Travis's"]
+        games = ["with a slinky", "Poker on the last day of school", "Blackjack on the last day of school", "BS on the last day of school", "Minecraft and griefing Gabe's house", "Overwatch and losing", "with a rubiks cube", "soccer with an ice cube", "tic-tac-toe with ice", "Titanfall 3", "Half Life 3: Part 2", "Team Fortress 3", "Super Smash Bros Ultimate", "signs at Travis's"]
         activity = discord.Game(random.choice(games))
         await client.change_presence(status=discord.Status.online, activity=activity)
 
