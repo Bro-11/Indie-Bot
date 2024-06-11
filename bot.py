@@ -82,7 +82,7 @@ async def sfx(ctx: discord.Interaction, sfx: str):
             print(f"{ctx.user}({ctx.user.id}) requested an invalid sound: {sfx}")
     except Exception as err:
         print(err)
-        await ctx.response.send_message(content=f"Error: {err}")
+        await ctx.channel.send(content=f"Error: {err}")
 @client.event
 async def on_voice_state_update(member, before, after):
     voice = member.guild.voice_client
@@ -118,7 +118,7 @@ async def resume(ctx: discord.Interaction):
             print(f"{ctx.user}({ctx.user.id}) used resume command but nothing was playing.")
     except Exception as err:
         print(err)
-        await ctx.response.send_message(content=f"Error: {err}")
+        await ctx.channel.send(content=f"Error: {err}")
 
 def getColorInt(name):
     rgb = mcolors.to_rgb(name)
@@ -144,7 +144,7 @@ async def embed(ctx: discord.Interaction=None, title: str=None, description: str
         print(f"{ctx.user}({ctx.user.id}) sent this embed: {title}, {description}, {url}, {color}, {image_url}")
     except Exception as err:
         print(err)
-        await ctx.response.send_message(content=f"Error: {err}")
+        await ctx.channel.send(content=f"Error: {err}")
 
 # command to pause voice if it is playing
 @slash.command(name="pause", description="Pauses playback", nsfw=False, guild=None)
@@ -172,7 +172,7 @@ async def pause(ctx: discord.Interaction):
             print(f"{ctx.user}({ctx.user.id}) paused, but nothing was playing.")
     except Exception as err:
         print(err)
-        await ctx.response.send_message(content=f"Error: {err}")
+        await ctx.channel.send(content=f"Error: {err}")
 
 @slash.command(name="huh", nsfw=False, guild=None)
 async def mystery(ctx: discord.Interaction):
@@ -181,7 +181,7 @@ async def mystery(ctx: discord.Interaction):
         await ctx.response.send_message(content="https://tenor.com/view/huh-cat-huh-m4rtin-huh-huh-meme-what-cat-gif-13719248636774070662", ephemeral=True)
     except Exception as err:
         print(err)
-        await ctx.response.send_message(content=f"Error: {err}")
+        await ctx.channel.send(content=f"Error: {err}")
 
 # command to stop voice
 @slash.command(name="stop", description="Stops playback", nsfw=False, guild=None)
@@ -216,7 +216,7 @@ async def stop(ctx: discord.Interaction):
             await ctx.response.send_message(content="No music is playing!", ephemeral=True)
     except Exception as err:
         print(err)
-        await ctx.response.send_message(content=f"Error: {err}")
+        await ctx.channel.send(content=f"Error: {err}")
 
 class Buttons(discord.ui.View):
     def __init__(self, timeout=180):
@@ -233,6 +233,42 @@ class Buttons(discord.ui.View):
     @discord.ui.button(label="Stop", disabled=False, style=discord.ButtonStyle.danger)
     async def stop_button(self, ctx: discord.Interaction, button=discord.ui.button):
         await slash.get_command('stop').callback(ctx=ctx)
+
+
+async def video_info_extractor(query):
+  ydl_opts = {
+      'default_search': 'ytsearch',
+      'ignoreerrors': True
+  }
+
+  loop = asyncio.get_event_loop()
+  with YoutubeDL(ydl_opts) as ydl:
+      # Run yt-dlp function in a separate thread
+      video_info = await loop.run_in_executor(None, lambda: ydl.extract_info(query, download=False))
+
+  return video_info
+
+async def video_search(query: str):
+  video_info = await video_info_extractor(query)
+  if not video_info['entries']:
+      return []
+  video_title = video_info['entries'][0]['title']
+  video_url = video_info['entries'][0]['webpage_url']
+  return video_url
+
+import re
+
+def isURL(url):
+    regex = re.compile(
+        r'^(?:http|ftp)s?://'  # http:// or https:// or ftp:// or ftps://
+        r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'  # domain...
+        r'localhost|'  # localhost...
+        r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'  # ...or ip
+        r'(?::\d+)?'  # optional port
+        r'(?:/?|[/?]\S+)$', re.IGNORECASE)
+
+    return re.match(regex, url) is not None
+
 
 @slash.command(name="play", description="Plays music in your voice channel", nsfw=False, guild=None)
 async def play(ctx: discord.Interaction, url: str):
@@ -258,14 +294,6 @@ async def play(ctx: discord.Interaction, url: str):
             while not voice.is_connected():
                 await asyncio.sleep(1)
 
-        '''#Actually playing music
-        if "youtube.com" in url or "soundcloud.com" in url or "youtu.be" in url:
-            url = url
-        else:
-            print(f"{ctx.user}({ctx.user.id}) provided an invalid link ({url})")
-            await ctx.response.send_message(content="That doesn't look like a YouTube or SoundCloud link!", ephemeral=True)
-            return'''
-
         if voice.is_playing():
             print(f"{ctx.user}({ctx.user.id}) requested url: {url}, but there was something already playing!")
             await ctx.response.send_message(content=f"There's already something playing!\nUse ``/stop`` to play something else!", ephemeral=True)
@@ -274,6 +302,8 @@ async def play(ctx: discord.Interaction, url: str):
             print(f"{ctx.user} started playing url: {url} in vc {ctx.user.voice.channel.name}")
             await ctx.response.send_message(content="Music is starting...", ephemeral=True)
 
+            if not isURL(url):
+                url = await video_search(url)
             YDL_OPTIONS = {'format': 'bestaudio', 'noplaylist': 'True'}
             FFMPEG_OPTIONS = {
                 'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
@@ -281,7 +311,7 @@ async def play(ctx: discord.Interaction, url: str):
             }
             with YoutubeDL(YDL_OPTIONS) as ydl:
                 info = ydl.extract_info(url, download=False)
-                #print(info)
+                # print(info)
             URL = info['url']
             TITLE = info['title']
             ARTIST = info['uploader']
@@ -294,7 +324,7 @@ async def play(ctx: discord.Interaction, url: str):
             last_url = url
     except Exception as err:
         print(err)
-        await ctx.response.send_message(content=f"Error: {err}")
+        await ctx.channel.send(content=f"Error: {err}")
 
 
 try:
@@ -334,7 +364,7 @@ async def score(ctx: discord.Interaction, member: discord.Member):
             await ctx.response.send_message(content=f'{user} has said the n-word {count} times(s)', silent=True)
     except Exception as err:
         print(err)
-        await ctx.response.send_message(content=f"Error: {err}")
+        await ctx.channel.send(content=f"Error: {err}")
 
 @slash.command(name="leaderboard", description="Displays the top five users with the highest score", nsfw=False, guild=None)
 async def leaderboard(ctx: discord.Interaction):
@@ -350,7 +380,7 @@ async def leaderboard(ctx: discord.Interaction):
                 await ctx.channel.send(f'{i}. {key} has said the n-word {value} time(s)')
     except Exception as err:
         print(err)
-        await ctx.response.send_message(content=f"Error: {err}")
+        await ctx.channel.send(content=f"Error: {err}")
 
 @client.event
 async def on_ready():
