@@ -15,6 +15,7 @@ load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('DISCORD_GUILD')
 NWORD = os.getenv('NWORD')
+DIR = os.getenv('DIRECTORY')
 intents = discord.Intents.all()
 client = discord.Client(intents=intents)
 slash = app_commands.CommandTree(client, fallback_to_global=True)
@@ -25,7 +26,7 @@ async def sounds(
     interaction: discord.Interaction,
     current: str,
 ) -> list[app_commands.Choice[str]]:
-    dir_path = 'C:/Users/joema/PycharmProjects/Journey Bot/sfx'
+    dir_path = f'{dir}/sfx'
     sfx = [os.path.splitext(f)[0] for f in os.listdir(dir_path) if os.path.isfile(os.path.join(dir_path, f))]
     return [
         app_commands.Choice(name=sfx, value=sfx)
@@ -80,7 +81,8 @@ async def sfx(ctx: discord.Interaction, sfx: str):
             await ctx.response.send_message(content=f"No sfx exists for **{sfx}**!", ephemeral=True, delete_after=5)
             print(f"{ctx.user}({ctx.user.id}) requested an invalid sound: {sfx}")
     except Exception as err:
-        ctx.response.send_message(content=f"Error: {err}")
+        print(err)
+        await ctx.response.send_message(content=f"Error: {err}")
 @client.event
 async def on_voice_state_update(member, before, after):
     voice = member.guild.voice_client
@@ -115,7 +117,8 @@ async def resume(ctx: discord.Interaction):
             await ctx.response.send_message(content="There's nothing playing!", ephemeral=True)
             print(f"{ctx.user}({ctx.user.id}) used resume command but nothing was playing.")
     except Exception as err:
-        ctx.response.send_message(content=f"Error: {err}")
+        print(err)
+        await ctx.response.send_message(content=f"Error: {err}")
 
 def getColorInt(name):
     rgb = mcolors.to_rgb(name)
@@ -140,7 +143,8 @@ async def embed(ctx: discord.Interaction=None, title: str=None, description: str
         await ctx.response.send_message(embed=embed)
         print(f"{ctx.user}({ctx.user.id}) sent this embed: {title}, {description}, {url}, {color}, {image_url}")
     except Exception as err:
-        ctx.response.send_message(content=f"Error: {err}")
+        print(err)
+        await ctx.response.send_message(content=f"Error: {err}")
 
 # command to pause voice if it is playing
 @slash.command(name="pause", description="Pauses playback", nsfw=False, guild=None)
@@ -167,7 +171,8 @@ async def pause(ctx: discord.Interaction):
             await ctx.response.send_message(content="There's nothing playing!", ephemeral=True)
             print(f"{ctx.user}({ctx.user.id}) paused, but nothing was playing.")
     except Exception as err:
-        ctx.response.send_message(content=f"Error: {err}")
+        print(err)
+        await ctx.response.send_message(content=f"Error: {err}")
 
 @slash.command(name="huh", nsfw=False, guild=None)
 async def mystery(ctx: discord.Interaction):
@@ -175,7 +180,8 @@ async def mystery(ctx: discord.Interaction):
         print(f"{ctx.user}({ctx.user.id}) used the huh command")
         await ctx.response.send_message(content="https://tenor.com/view/huh-cat-huh-m4rtin-huh-huh-meme-what-cat-gif-13719248636774070662", ephemeral=True)
     except Exception as err:
-        ctx.response.send_message(content=f"Error: {err}")
+        print(err)
+        await ctx.response.send_message(content=f"Error: {err}")
 
 # command to stop voice
 @slash.command(name="stop", description="Stops playback", nsfw=False, guild=None)
@@ -209,7 +215,8 @@ async def stop(ctx: discord.Interaction):
             print(f"{ctx.user}({ctx.user.id}) used stop command but no music was playing.")
             await ctx.response.send_message(content="No music is playing!", ephemeral=True)
     except Exception as err:
-        ctx.response.send_message(content=f"Error: {err}")
+        print(err)
+        await ctx.response.send_message(content=f"Error: {err}")
 
 class Buttons(discord.ui.View):
     def __init__(self, timeout=180):
@@ -286,7 +293,8 @@ async def play(ctx: discord.Interaction, url: str):
             last_message = await ctx.channel.send(embed=embed, delete_after=600, view=Buttons())
             last_url = url
     except Exception as err:
-        ctx.response.send_message(content=f"Error: {err}")
+        print(err)
+        await ctx.response.send_message(content=f"Error: {err}")
 
 
 try:
@@ -325,7 +333,8 @@ async def score(ctx: discord.Interaction, member: discord.Member):
             print(f"{ctx.user}({ctx.user.id}) requested score for: {member}({member.id}), in guild: {ctx.guild}({ctx.guild.id})")
             await ctx.response.send_message(content=f'{user} has said the n-word {count} times(s)', silent=True)
     except Exception as err:
-        ctx.response.send_message(content=f"Error: {err}")
+        print(err)
+        await ctx.response.send_message(content=f"Error: {err}")
 
 @slash.command(name="leaderboard", description="Displays the top five users with the highest score", nsfw=False, guild=None)
 async def leaderboard(ctx: discord.Interaction):
@@ -340,7 +349,8 @@ async def leaderboard(ctx: discord.Interaction):
             for i, (key, value) in enumerate(leaderboard, start=1):
                 await ctx.channel.send(f'{i}. {key} has said the n-word {value} time(s)')
     except Exception as err:
-        ctx.response.send_message(content=f"Error: {err}")
+        print(err)
+        await ctx.response.send_message(content=f"Error: {err}")
 
 @client.event
 async def on_ready():
