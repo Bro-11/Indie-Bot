@@ -73,7 +73,7 @@ async def sfx(ctx: discord.Interaction, sfx: str):
             print(f"{ctx.user.name}({ctx.user.id}) is playing sfx {sfx} in {ctx.user.voice.channel.name}({ctx.user.voice.channel.id})")
             await ctx.response.send_message(content=f"Playing sfx: **{sfx}**", ephemeral=True, delete_after=5)
             await asyncio.sleep(1)
-            voice.play(FFmpegPCMAudio(source=f'C:/Users/joema/PycharmProjects/Journey Bot/sfx/{sfx}.mp3', executable='ffmpeg.exe', before_options=FFMPEG_OPTIONS))
+            voice.play(FFmpegPCMAudio(source=f'[{DIR}]/{sfx}.mp3', executable='ffmpeg.exe', before_options=FFMPEG_OPTIONS))
             voice.is_playing()
             last_message = None
             last_url = None
