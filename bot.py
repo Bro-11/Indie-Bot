@@ -26,7 +26,7 @@ async def sounds(
     interaction: discord.Interaction,
     current: str,
 ) -> list[app_commands.Choice[str]]:
-    dir_path = f'{dir}/sfx'
+    dir_path = f'{DIR}/sfx'
     sfx = [os.path.splitext(f)[0] for f in os.listdir(dir_path) if os.path.isfile(os.path.join(dir_path, f))]
     return [
         app_commands.Choice(name=sfx, value=sfx)
