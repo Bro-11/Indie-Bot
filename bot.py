@@ -26,6 +26,7 @@ queue = asyncio.Queue()
 voice = None
 text_channel = None
 user_mention = None
+skip = 0
 
 
 async def sounds(
@@ -156,7 +157,6 @@ async def embed(ctx: discord.Interaction = None, title: str = None, description:
         await ctx.channel.send(content=f"Error: {err}")
 
 
-# command to pause voice if it is playing
 @slash.command(name="pause", description="Pauses playback", nsfw=False, guild=None)
 async def pause(ctx: discord.Interaction):
     try:
@@ -192,9 +192,9 @@ async def mystery(ctx: discord.Interaction):
         await ctx.channel.send(content=f"Error: {err}")
 
 
-# command to stop voice
 @slash.command(name="stop", description="Stops playback", nsfw=False, guild=None)
 async def stop(ctx: discord.Interaction):
+    global queue
     try:
         try:
             channel = ctx.user.voice.channel
@@ -205,6 +205,7 @@ async def stop(ctx: discord.Interaction):
 
         voice = ctx.user.guild.voice_client
 
+        queue = asyncio.Queue()
         voice.stop()
         if last_message is None:
             await ctx.response.send_message(content="Sound has stopped!", ephemeral=True)
@@ -222,19 +223,55 @@ async def stop(ctx: discord.Interaction):
         await ctx.channel.send(content=f"Error: {err}")
 
 
+@slash.command(name="skip", description="Skips the current song", nsfw=False, guild=None)
+async def skip(ctx: discord.Interaction):
+    global queue
+    global skip
+    try:
+        try:
+            channel = ctx.user.voice.channel
+        except AttributeError:
+            await ctx.response.send_message(content="You aren't in a voice channel!", ephemeral=True)
+            print(f"{ctx.user}({ctx.user.id}) used stop command but wasn't in a vc!")
+            return
+
+        voice = ctx.user.guild.voice_client
+
+        skip = 1
+        voice.stop()
+        if last_message is None:
+            await ctx.response.send_message(content="Sound is skipped!", ephemeral=True)
+            print(f"{ctx.user}({ctx.user.id}) skipped a sound.")
+            return
+        else:
+            embed = discord.Embed(description=f"[Music]({last_url}) was skipped by **{ctx.user.mention}**",                color=discord.Color.blue())
+            await last_message.edit(embed=embed, delete_after=120, view=None)
+            await ctx.response.send_message(content="Music was skipped!", ephemeral=True)
+            print(f"{ctx.user}({ctx.user.id}) skipped the music.")
+            return
+
+    except Exception as err:
+        print(err)
+        await ctx.channel.send(content=f"Error: {err}")
+
+
 class Buttons(discord.ui.View):
     def __init__(self, timeout=180):
         super().__init__(timeout=timeout)
 
-    @discord.ui.button(label="Pause", disabled=False, style=discord.ButtonStyle.primary)
+    @discord.ui.button(label="Pause", disabled=False, style=discord.ButtonStyle.primary, emoji="⏸")
     async def pause_button(self, ctx=discord.Interaction, button=discord.ui.button):
         await slash.get_command('pause').callback(ctx=ctx)
 
-    @discord.ui.button(label="Resume", disabled=False, style=discord.ButtonStyle.primary)
+    @discord.ui.button(label="Resume", disabled=False, style=discord.ButtonStyle.primary, emoji="▶")
     async def resume_button(self, ctx: discord.Interaction, button=discord.ui.button):
         await slash.get_command('resume').callback(ctx=ctx)
 
-    @discord.ui.button(label="Stop", disabled=False, style=discord.ButtonStyle.danger)
+    @discord.ui.button(label="Skip", disabled=False, style=discord.ButtonStyle.primary, emoji="⏩")
+    async def skip_button(self, ctx: discord.Interaction, button=discord.ui.button):
+        await slash.get_command('skip').callback(ctx=ctx)
+
+    @discord.ui.button(label="Stop", disabled=False, style=discord.ButtonStyle.danger, emoji="⏹")
     async def stop_button(self, ctx: discord.Interaction, button=discord.ui.button):
         await slash.get_command('stop').callback(ctx=ctx)
 
@@ -283,6 +320,7 @@ async def play(ctx: discord.Interaction, url: str):
         global last_url
         global voice
         global user_mention
+        global skip
         # Joining vc
         try:
             channel = ctx.user.voice.channel
@@ -349,8 +387,13 @@ async def play_queue():
         color=discord.Color.blue())
     last_message = await text_channel.send(embed=embed, delete_after=600, view=Buttons())
     last_url = url
+    counter = 0
     if DURATION is not None:
-        await asyncio.sleep(DURATION)
+        while counter < DURATION or not voice.is_playing():
+            if skip == 1:
+                break
+            await asyncio.sleep(0.5)
+            counter += 0.5
 
 try:
     with open('waffles_counter.json', 'r') as f:
