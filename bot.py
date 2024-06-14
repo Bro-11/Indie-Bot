@@ -267,7 +267,7 @@ class Buttons(discord.ui.View):
     async def resume_button(self, ctx: discord.Interaction, button=discord.ui.button):
         await slash.get_command('resume').callback(ctx=ctx)
 
-    @discord.ui.button(label="Skip", disabled=False, style=discord.ButtonStyle.primary, emoji="⏩")
+    @discord.ui.button(label="Skip", disabled=False, style=discord.ButtonStyle.primary, emoji="⏭")
     async def skip_button(self, ctx: discord.Interaction, button=discord.ui.button):
         await slash.get_command('skip').callback(ctx=ctx)
 
