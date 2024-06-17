@@ -1,6 +1,6 @@
 # Indie-Bot
 A self-hosted bot made for smaller Discord communities  
-Made to be easy to setup and easy to use!
+Made to be easy to setup and even easier to use!
 
 # Setup
 You can find the setup guide [here](setup.md)!
