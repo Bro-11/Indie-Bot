@@ -406,7 +406,6 @@ if music_bot_module:
     @tasks.loop(seconds=2)
     async def play_queue():
         global queue
-        global channel
         global last_message
         global last_url
         global voice
@@ -432,18 +431,26 @@ if music_bot_module:
         embed = discord.Embed(
             description=f"### Now Playing:\n\n**[{TITLE}]({url})** by **[{ARTIST}](https://www.youtube.com/{ARTIST_ID})**, requested by **{user_mention}**",
             color=discord.Color.blue())
-        if playback_buttons_module:
-            last_message = await text_channel.send(embed=embed, delete_after=600, view=Buttons())
+        view = Buttons() if playback_buttons_module else None
+        send_or_edit = dict(embed=embed, delete_after=600, view=view)
+
+        if last_message is None:
+            last_message = await text_channel.send(**send_or_edit)
         else:
-            last_message = await text_channel.send(embed=embed, delete_after=600)
+            last_message = await last_message.edit(**send_or_edit)
+
         last_url = url
         counter = 0
-        if DURATION is not None:
+        if DURATION:
             while counter < DURATION or not voice.is_playing():
                 if skip == 1:
                     break
                 await asyncio.sleep(0.5)
                 counter += 0.5
+        embed = discord.Embed(
+            description=f"### Finished playing:\n\n**[{TITLE}]({url})** by **[{ARTIST}](https://www.youtube.com/{ARTIST_ID})**, requested by **{user_mention}**",
+            color=discord.Color.blue())
+        last_message = await last_message.edit(embed=embed, delete_after=600)
 
 if word_counter_module:
     try:
@@ -512,7 +519,7 @@ async def on_ready():
 
     # You're not supposed to do this but idrc
     await slash.sync()
-    
+
     if fun_activity_module:
         games = ["with a slinky", "Poker on the last day of school", "Blackjack on the last day of school",
                  "BS on the last day of school", "Minecraft and griefing Gabe's house", "Overwatch and losing",
