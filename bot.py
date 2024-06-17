@@ -39,6 +39,8 @@ soundboard_module = True
 # /embed to easily create and send embeds!
 # Note: Requires Manager Channels permission!
 embed_builder_module = True
+# Set to False to allow anyone to create embeds
+embed_builder_permissions = True
 
 # /huh to send a huh gif to the user who runs the command
 # This doesn't really do anything useful, just for fun
@@ -140,7 +142,7 @@ if embed_builder_module:
     @slash.command(name="embed", description="Create and send an embed in the current channel!", nsfw=False, guild=None)
     async def embed(ctx: discord.Interaction = None, title: str = None, description: str = None, url: str = None, color: str = "white", image_url: str = None):
         try:
-            if not ctx.user.guild_permissions.manage_messages:
+            if not ctx.user.guild_permissions.manage_messages and embed_builder_permissions:
                 await ctx.response.send_message("You need the **Manage Messages** permission to send embeds!", ephemeral=True)
                 print(f"{ctx.user}({ctx.user.id}) lacked the permissions to send this embed: {title}, {description}, {url}, {color}")
                 return
