@@ -504,21 +504,21 @@ if word_counter_module:
             print(err)
             await ctx.channel.send(content=f"Error: {err}")
 
-
 @client.event
 async def on_ready():
     for guild in client.guilds:
         if guild.name == GUILD:
             break
-            
+
+    # You're not supposed to do this but idrc
     await slash.sync()
+    
     if fun_activity_module:
         games = ["with a slinky", "Poker on the last day of school", "Blackjack on the last day of school",
                  "BS on the last day of school", "Minecraft and griefing Gabe's house", "Overwatch and losing",
                  "with a rubiks cube", "soccer with an ice cube", "tic-tac-toe with ice", "Titanfall 3",
                  "Half Life 3: Part 2", "Team Fortress 3", "Super Smash Bros Ultimate", "signs at Travis's"]
-        activity = discord.Game(random.choice(games))
-        await client.change_presence(status=discord.Status.online, activity=activity)
+        await client.change_presence(status=discord.Status.online, activity=discord.Game(random.choice(games)))
 
     print(f'Connected to: \n{guild.name}({guild.id})')
     global queue
@@ -533,7 +533,7 @@ async def on_ready():
         iterator = iter(data)
         for first in range(0, len(data), size):
             yield list(islice(iterator, size))
-    
+
     @tasks.loop(minutes=5)
     async def update_roles():
         try:
