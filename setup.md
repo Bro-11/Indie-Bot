@@ -29,15 +29,15 @@ At the [Discord developer portal](https://discord.com/developers/applications):
 #### ENV Values
 Go generate and/or find your bot token at the [Discord developer portal](https://discord.com/developers/applications).  
   Find the token in the **Bot** section, accesible from the left side of the page.  
-  Copy that token and paste it in the .env file after the ``DISCORD_TOKEN=`` (Make sure to surround it with apostrophes)
-Locate the root folder of your project
-  This folder should be the first folder in the top left corner and should be named the same as your project name
-    Right-click this folder
-    Click **Copy Path/Reference**
-    Click **Copy Absolute Path**
-  Then, replace every backslash (\) with a forward slash (/)
-  Paste it in the .env file after the ``DIRECTORY=`` (Make sure to surround it with apostrophes)
+  Copy that token and paste it in the .env file after the ``DISCORD_TOKEN=`` (Make sure to surround it with apostrophes)  
+Locate the root folder of your project  
+  This folder should be the first folder in the top left corner and should be named the same as your project name  
+    Right-click this folder  
+    Click **Copy Path/Reference**  
+    Click **Copy Absolute Path**  
+  Then, replace every backslash (\) with a forward slash (/)  
+  Paste it in the .env file after the ``DIRECTORY=`` (Make sure to surround it with apostrophes)  
 
-### Press Start!
-#### You're all set!
+### Press Start!  
+#### You're all set!  
 Press ``Shift+F10`` or the green start button in the window bar.
