@@ -52,9 +52,15 @@ music_bot_module = True
 playback_buttons_module = True
 
 # Watches and tracks how many times users say a certain word
-# By default, this is set to the n-word
-# You can change the word in the .env file
+# By default, this is set to the n-word. You can change the word in the .env file
 word_counter_module = True
+
+# Assigns roles based on the server user's presence (online, idle, do not disturb, etc)
+# Make sure there are roles called "Online", "Idle", "Do Not Disturb", and "Offline"
+presence_roles_module = True
+
+# Gives the bot a fun activity to play on its profile, purely cosmetic
+fun_activity_module = True
 # ---------------------------------------------
 
 # Soundboard command
@@ -72,8 +78,8 @@ if soundboard_module:
 
 
     # Remember to create a folder in the same folder as bot.py named sfx
-    
-    
+
+
     @slash.command(name="sfx", description="Plays a sound effect in your voice channel", nsfw=False, guild=None)
     @app_commands.autocomplete(sfx=sounds)
     async def sfx(ctx: discord.Interaction, sfx: str):
@@ -174,8 +180,8 @@ if music_bot_module:
                 print(f"Leaving empty voice channel")
                 await voice.disconnect(force=False)
                 voice.stop()
-    
-    
+
+
     # command to resume voice if it is paused
     @slash.command(name="resume", description="Resumes playback", nsfw=False, guild=None)
     async def resume(ctx: discord.Interaction):
@@ -187,7 +193,7 @@ if music_bot_module:
                 print(f"{ctx.user}({ctx.user.id}) tried resuming, but wasn't in a vc.")
                 return
             voice = ctx.user.guild.voice_client
-    
+
             if last_message is None:
                 await ctx.response.send_message(content="You can't resume sounds!", ephemeral=True)
                 print(f"{ctx.user}({ctx.user.id}) tried resuming a sound.")
@@ -196,12 +202,12 @@ if music_bot_module:
                 print(f"{ctx.user}({ctx.user.id}) resumed the music.")
                 voice.resume()
                 await ctx.response.send_message(content="Resumed!", ephemeral=True)
-    
+
         except Exception as err:
             print(err)
             await ctx.channel.send(content=f"Error: {err}")
-    
-    
+
+
     @slash.command(name="pause", description="Pauses playback", nsfw=False, guild=None)
     async def pause(ctx: discord.Interaction):
         try:
@@ -212,7 +218,7 @@ if music_bot_module:
                 print(f"{ctx.user}({ctx.user.id}) tried to pause, but wasn't in a vc.")
                 return
             voice = ctx.user.guild.voice_client
-    
+
             if last_message is None:
                 await ctx.response.send_message(content="You can't pause sounds!", ephemeral=True)
                 print(f"{ctx.user}({ctx.user.id}) tried to pause a sound")
@@ -221,12 +227,12 @@ if music_bot_module:
                 print(f"{ctx.user}({ctx.user.id}) paused music.")
                 voice.pause()
                 await ctx.response.send_message(content="Paused!", ephemeral=True)
-    
+
         except Exception as err:
             print(err)
             await ctx.channel.send(content=f"Error: {err}")
-    
-    
+
+
     @slash.command(name="stop", description="Stops playback", nsfw=False, guild=None)
     async def stop(ctx: discord.Interaction):
         global queue
@@ -237,9 +243,9 @@ if music_bot_module:
                 await ctx.response.send_message(content="You aren't in a voice channel!", ephemeral=True)
                 print(f"{ctx.user}({ctx.user.id}) used stop command but wasn't in a vc!")
                 return
-    
+
             voice = ctx.user.guild.voice_client
-    
+
             queue = asyncio.Queue()
             voice.stop()
             if last_message is None:
@@ -252,12 +258,12 @@ if music_bot_module:
                 await ctx.response.send_message(content="Music has stopped!", ephemeral=True)
                 print(f"{ctx.user}({ctx.user.id}) stopped the music.")
                 return
-    
+
         except Exception as err:
             print(err)
             await ctx.channel.send(content=f"Error: {err}")
-    
-    
+
+
     @slash.command(name="skip", description="Skips the current song", nsfw=False, guild=None)
     async def skip(ctx: discord.Interaction):
         global queue
@@ -269,9 +275,9 @@ if music_bot_module:
                 await ctx.response.send_message(content="You aren't in a voice channel!", ephemeral=True)
                 print(f"{ctx.user}({ctx.user.id}) used stop command but wasn't in a vc!")
                 return
-    
+
             voice = ctx.user.guild.voice_client
-    
+
             skip = 1
             voice.stop()
             if last_message is None:
@@ -284,7 +290,7 @@ if music_bot_module:
                 await ctx.response.send_message(content="Music was skipped!", ephemeral=True)
                 print(f"{ctx.user}({ctx.user.id}) skipped the music.")
                 return
-    
+
         except Exception as err:
             print(err)
             await ctx.channel.send(content=f"Error: {err}")
@@ -297,19 +303,19 @@ if playback_buttons_module:
         class Buttons(discord.ui.View):
             def __init__(self, timeout=180):
                 super().__init__(timeout=timeout)
-        
+
             @discord.ui.button(label="Pause", disabled=False, style=discord.ButtonStyle.primary, emoji="⏸")
             async def pause_button(self, ctx=discord.Interaction, button=discord.ui.button):
                 await slash.get_command('pause').callback(ctx=ctx)
-        
+
             @discord.ui.button(label="Resume", disabled=False, style=discord.ButtonStyle.primary, emoji="▶")
             async def resume_button(self, ctx: discord.Interaction, button=discord.ui.button):
                 await slash.get_command('resume').callback(ctx=ctx)
-        
+
             @discord.ui.button(label="Skip", disabled=False, style=discord.ButtonStyle.primary, emoji="⏭")
             async def skip_button(self, ctx: discord.Interaction, button=discord.ui.button):
                 await slash.get_command('skip').callback(ctx=ctx)
-        
+
             @discord.ui.button(label="Stop", disabled=False, style=discord.ButtonStyle.danger, emoji="⏹")
             async def stop_button(self, ctx: discord.Interaction, button=discord.ui.button):
                 await slash.get_command('stop').callback(ctx=ctx)
@@ -369,7 +375,7 @@ if music_bot_module:
                 print(f"{ctx.user} requested url: {url}, but wasn't in a vc.")
                 await ctx.response.send_message(content="You aren't in a voice channel!", ephemeral=True)
                 return
-    
+
             if ctx.user.guild.voice_client:
                 voice = ctx.user.guild.voice_client
                 if voice.channel != channel:
@@ -379,14 +385,14 @@ if music_bot_module:
             if not voice.is_connected():
                 while not voice.is_connected():
                     await asyncio.sleep(1)
-    
+
             if voice.is_playing():
                 print(f"{ctx.user}({ctx.user.id}) requested url: {url}, added to queue.")
                 await ctx.response.send_message(content=f"There's already something playing, but I've added it to the queue!", ephemeral=True)
             else:
                 print(f"{ctx.user} started playing url: {url} in vc {ctx.user.voice.channel.name}")
                 await ctx.response.send_message(content="Music is starting...", ephemeral=True)
-    
+
             if not is_url(url):
                 url = await video_search(url)
             await queue.put(url)
@@ -395,8 +401,8 @@ if music_bot_module:
         except Exception as err:
             print(err)
             await ctx.channel.send(content=f"Error: {err}")
-    
-    
+
+
     @tasks.loop(seconds=2)
     async def play_queue():
         global queue
@@ -445,14 +451,14 @@ if word_counter_module:
             waffles_counter = json.load(f)
     except FileNotFoundError:
         waffles_counter = {}
-        
-    
+
+
     # NWORD Trigger
     @client.event
     async def on_message(message):
         if message.author.bot:  # ignore bots
             return
-    
+
         if NWORD in message.content.lower():
             count =  message.content.lower().count(NWORD)
             user = message.author.name
@@ -463,8 +469,8 @@ if word_counter_module:
                 waffles_counter[user] = count
         with open('waffles_counter.json', 'w') as f:
             json.dump(waffles_counter, f)
-    
-    
+
+
     @slash.command(name="score", description="Displays a users score, if you wanna call it that", nsfw=False, guild=None)
     async def score(ctx: discord.Interaction, member: discord.Member):
         try:
@@ -480,8 +486,8 @@ if word_counter_module:
         except Exception as err:
             print(err)
             await ctx.channel.send(content=f"Error: {err}")
-    
-    
+
+
     @slash.command(name="leaderboard", description="Displays the top five users with the highest score", nsfw=False, guild=None)
     async def leaderboard(ctx: discord.Interaction):
         try:
@@ -504,6 +510,15 @@ async def on_ready():
     for guild in client.guilds:
         if guild.name == GUILD:
             break
+            
+    await slash.sync()
+    if fun_activity_module:
+        games = ["with a slinky", "Poker on the last day of school", "Blackjack on the last day of school",
+                 "BS on the last day of school", "Minecraft and griefing Gabe's house", "Overwatch and losing",
+                 "with a rubiks cube", "soccer with an ice cube", "tic-tac-toe with ice", "Titanfall 3",
+                 "Half Life 3: Part 2", "Team Fortress 3", "Super Smash Bros Ultimate", "signs at Travis's"]
+        activity = discord.Game(random.choice(games))
+        await client.change_presence(status=discord.Status.online, activity=activity)
 
     print(f'Connected to: \n{guild.name}({guild.id})')
     global queue
@@ -518,7 +533,7 @@ async def on_ready():
         iterator = iter(data)
         for first in range(0, len(data), size):
             yield list(islice(iterator, size))
-
+    
     @tasks.loop(minutes=5)
     async def update_roles():
         try:
@@ -545,11 +560,8 @@ async def on_ready():
     @update_roles.before_loop
     async def before_update_roles():
         await client.wait_until_ready()
-        await slash.sync()
-        games = ["with a slinky", "Poker on the last day of school", "Blackjack on the last day of school", "BS on the last day of school", "Minecraft and griefing Gabe's house", "Overwatch and losing", "with a rubiks cube", "soccer with an ice cube", "tic-tac-toe with ice", "Titanfall 3", "Half Life 3: Part 2", "Team Fortress 3", "Super Smash Bros Ultimate", "signs at Travis's"]
-        activity = discord.Game(random.choice(games))
-        await client.change_presence(status=discord.Status.online, activity=activity)
 
-    update_roles.start()
+    if presence_roles_module:
+        update_roles.start()
     play_queue.start()
 client.run(TOKEN)
