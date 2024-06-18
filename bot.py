@@ -28,6 +28,17 @@ text_channel = None
 user_mention = None
 skip = 0
 
+'''
+   _____             __ _       
+  / ____|           / _(_)      
+ | |     ___  _ __ | |_ _  __ _ 
+ | |    / _ \| '_ \|  _| |/ _` |
+ | |___| (_) | | | | | | | (_| |
+  \_____\___/|_| |_|_| |_|\__, |
+                           __/ |
+                          |___/ 
+'''
+
 # ---------------------------------------------
 # Module Overview
 # You can disable and enable different features
