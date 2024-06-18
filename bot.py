@@ -30,14 +30,13 @@ skip = 0
 
 # ---------------------------------------------
 # Module Overview
-# You can disable and enable different features
-# of the bot here!
+# You can disable and enable different features of the bot here!
 
 # /sfx to play sound effects in voice channels
 soundboard_module = True
 
 # /embed to easily create and send embeds!
-# Note: Requires Manager Channels permission!
+# Note: Requires Manage Messages permission!
 embed_builder_module = True
 # Set to False to allow anyone to create embeds
 embed_builder_permissions = True
@@ -454,6 +453,7 @@ if music_bot_module:
             color=discord.Color.blue())
         last_message = await last_message.edit(embed=embed, delete_after=600)
 
+# Tracks how many times users say a certain word
 if word_counter_module:
     try:
         with open('waffles_counter.json', 'r') as f:
@@ -481,7 +481,7 @@ if word_counter_module:
 
 
     @slash.command(name="score", description="Displays a users score, if you wanna call it that", nsfw=False, guild=None)
-    async def score(ctx: discord.Interaction, member: discord.Member):
+    async def score(ctx: discord.Interaction, member: discord.Member = None):
         try:
             if ctx.guild is None:  # the command is used in a dm
                 user = ctx.user if member is None else member
