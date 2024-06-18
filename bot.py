@@ -7,7 +7,7 @@ from discord import FFmpegPCMAudio, app_commands
 from yt_dlp import YoutubeDL
 from itertools import islice
 from datetime import datetime
-import json, random, asyncio
+import json, random, asyncio, re
 from operator import itemgetter
 import matplotlib.colors as mcolors
 import re
@@ -88,7 +88,7 @@ if soundboard_module:
             global last_message
             global last_url
             sfx = sfx.lower()
-            #Joining vc
+            # Joining vc
             try:
                 channel = ctx.user.voice.channel
             except AttributeError:
@@ -112,15 +112,15 @@ if soundboard_module:
 
             # sfx check
             try:
-                file = open(f'sfx/{sfx}.mp3')
-                FFMPEG_OPTIONS = {
+                open(f'sfx/{sfx}.mp3')
+                ffmpeg_options = {
                     'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
                     'options': '-vn'
                 }
                 print(f"{ctx.user.name}({ctx.user.id}) is playing sfx {sfx} in {ctx.user.voice.channel.name}({ctx.user.voice.channel.id})")
                 await ctx.response.send_message(content=f"Playing sfx: **{sfx}**", ephemeral=True, delete_after=5)
                 await asyncio.sleep(1)
-                voice.play(FFmpegPCMAudio(source=f'[{DIR}]/{sfx}.mp3', executable='ffmpeg.exe', before_options=FFMPEG_OPTIONS))
+                voice.play(FFmpegPCMAudio(source=f'[{DIR}]/{sfx}.mp3', executable='ffmpeg.exe', before_options=ffmpeg_options))
                 voice.is_playing()
                 last_message = None
                 last_url = None
@@ -342,7 +342,6 @@ if music_bot_module:
         video_info = await video_info_extractor(query)
         if not video_info['entries']:
             return []
-        video_title = video_info['entries'][0]['title']
         video_url = video_info['entries'][0]['webpage_url']
         return video_url
 
@@ -414,23 +413,23 @@ if music_bot_module:
         if queue.empty() or voice.is_playing():
             return
         url = await queue.get()
-        YDL_OPTIONS = {'format': 'bestaudio', 'noplaylist': 'True'}
-        FFMPEG_OPTIONS = {
+        ydl_options = {'format': 'bestaudio', 'noplaylist': 'True'}
+        ffmpeg_options = {
             'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
             'options': '-vn'
         }
-        with YoutubeDL(YDL_OPTIONS) as ydl:
+        with YoutubeDL(ydl_options) as ydl:
             info = ydl.extract_info(url, download=False)
             # print(info)
-        URL = info['url']
-        TITLE = info['title']
-        ARTIST = info['uploader']
-        ARTIST_ID = info['uploader_id']
-        DURATION = info['duration']
-        voice.play(FFmpegPCMAudio(URL, **FFMPEG_OPTIONS))
+        url = info['url']
+        title = info['title']
+        artist = info['uploader']
+        artist_id = info['uploader_id']
+        duration = info['duration']
+        voice.play(FFmpegPCMAudio(URL, **ffmpeg_options))
         voice.is_playing()
         embed = discord.Embed(
-            description=f"### Now Playing:\n\n**[{TITLE}]({url})** by **[{ARTIST}](https://www.youtube.com/{ARTIST_ID})**, requested by **{user_mention}**",
+            description=f"### Now Playing:\n\n**[{title}]({url})** by **[{artist}](https://www.youtube.com/{artist_id})**, requested by **{user_mention}**",
             color=discord.Color.blue())
         view = Buttons() if playback_buttons_module else None
         send_or_edit = dict(embed=embed, delete_after=600, view=view)
@@ -442,8 +441,8 @@ if music_bot_module:
 
         last_url = url
         counter = 0
-        if DURATION:
-            while counter < DURATION or not voice.is_playing():
+        if duration:
+            while counter < duration or not voice.is_playing():
                 if skip == 1:
                     break
                 await asyncio.sleep(0.5)
@@ -460,7 +459,6 @@ if word_counter_module:
             waffles_counter = json.load(f)
     except FileNotFoundError:
         waffles_counter = {}
-
 
     # NWORD Trigger
     @client.event
@@ -483,15 +481,12 @@ if word_counter_module:
     @slash.command(name="score", description="Displays a users score, if you wanna call it that", nsfw=False, guild=None)
     async def score(ctx: discord.Interaction, member: discord.Member = None):
         try:
-            if ctx.guild is None:  # the command is used in a dm
-                user = ctx.user if member is None else member
-            else:  # the command is used in a guild
-                if member is None:
-                    member = ctx.user
-                user = member.display_name
-                count = waffles_counter.get(user, 0)
-                print(f"{ctx.user}({ctx.user.id}) requested score for: {member}({member.id}), in guild: {ctx.guild}({ctx.guild.id})")
-                await ctx.response.send_message(content=f'{user} has said the n-word {count} times(s)', silent=True)
+            if ctx.guild is None or member is None:  # the command is used in a dm
+                member = ctx.user
+            user = member.display_name
+            count = waffles_counter.get(user, 0)
+            print(f"{ctx.user}({ctx.user.id}) requested score for: {member}({member.id}), in guild: {ctx.guild}({ctx.guild.id})")
+            await ctx.response.send_message(content=f'{user} has said the n-word {count} times(s)', silent=True)
         except Exception as err:
             print(err)
             await ctx.channel.send(content=f"Error: {err}")
@@ -501,7 +496,7 @@ if word_counter_module:
     async def leaderboard(ctx: discord.Interaction):
         try:
             leaderboard = sorted(waffles_counter.items(), key=itemgetter(1), reverse=True)[:5]
-            if ctx.guild is None: #It's used in a dm
+            if ctx.guild is None:  # It's used in a dm
                 print(f"{ctx.user}({ctx.user.id}) requested a leaderboard in a dm.")
                 await ctx.response.send_message(content='Use this command in a server!')
             else:
