@@ -35,7 +35,7 @@ At the [Discord developer portal](https://discord.com/developers/applications):
     1A. Right-click this folder  
     1B. Click **Copy Path/Reference**  
     1C. Click **Copy Absolute Path**  
-  2. Then, replace every backslash (\) with a forward slash (/)  
+  2. Then, replace every backslash (\\) with a forward slash (/)  
   3. Paste it in the .env file after the ``DIRECTORY=`` (Make sure to surround it with apostrophes)  
 
 ### Press Start!  
