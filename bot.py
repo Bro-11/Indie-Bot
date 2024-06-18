@@ -17,8 +17,7 @@ TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('DISCORD_GUILD')
 NWORD = os.getenv('NWORD')
 DIR = os.getenv('DIRECTORY')
-intents = discord.Intents.all()
-client = discord.Client(intents=intents)
+client = discord.Client(intents=discord.Intents.all())
 slash = app_commands.CommandTree(client, fallback_to_global=True)
 last_message = None
 last_url = None
@@ -28,16 +27,6 @@ text_channel = None
 user_mention = None
 skip = 0
 
-'''
-   _____             __ _       
-  / ____|           / _(_)      
- | |     ___  _ __ | |_ _  __ _ 
- | |    / _ \| '_ \|  _| |/ _` |
- | |___| (_) | | | | | | | (_| |
-  \_____\___/|_| |_|_| |_|\__, |
-                           __/ |
-                          |___/ 
-'''
 
 # ---------------------------------------------
 # Module Overview
