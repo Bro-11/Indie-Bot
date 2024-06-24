@@ -70,7 +70,7 @@ if soundboard_module:
         interaction: discord.Interaction,
         current: str,
     ) -> list[app_commands.Choice[str]]:
-        dir_path = f'{DIR}/sfx'
+        dir_path = 'sfx'
         sfx = [os.path.splitext(f)[0] for f in os.listdir(dir_path) if os.path.isfile(os.path.join(dir_path, f))]
         return [
             app_commands.Choice(name=sfx, value=sfx)
@@ -92,8 +92,8 @@ if soundboard_module:
                 channel = ctx.user.voice.channel
             except AttributeError:
                 print(f"{ctx.user}({ctx.user.id}) tried to play sfx: {sfx}.mp3, but wasn't in a vc.")
-                await ctx.response.send_message(content="You aren't in a voice channel!", 
-                                                ephemeral=True, 
+                await ctx.response.send_message(content="You aren't in a voice channel!",
+                                                ephemeral=True,
                                                 delete_after=5)
                 return
 
@@ -105,8 +105,8 @@ if soundboard_module:
                 voice = await channel.connect()
 
             if voice.is_playing():
-                await ctx.response.send_message(content="There's already something playing!", 
-                                                ephemeral=True, 
+                await ctx.response.send_message(content="There's already something playing!",
+                                                ephemeral=True,
                                                 delete_after=5)
                 print(f"{ctx.user}({ctx.user.id}) tried to play a sound, but one was already playing!")
             if not voice.is_connected():
@@ -125,8 +125,8 @@ if soundboard_module:
                       f"({ctx.user.voice.channel.id})")
                 await ctx.response.send_message(content=f"Playing sfx: **{sfx}**", ephemeral=True, delete_after=5)
                 await asyncio.sleep(1)
-                voice.play(FFmpegPCMAudio(source=f'[{DIR}]/{sfx}.mp3', 
-                                          executable='ffmpeg.exe', 
+                voice.play(FFmpegPCMAudio(source=f'sfx/{sfx}.mp3',
+                                          executable='ffmpeg.exe',
                                           before_options=ffmpeg_options))
                 voice.is_playing()
                 playing_sfx = True
@@ -148,15 +148,15 @@ if embed_builder_module:
 
 
     @slash.command(name="embed", description="Create and send an embed in the current channel!", nsfw=False, guild=None)
-    async def embed(ctx: discord.Interaction = None, 
-                    title: str = None, 
-                    description: str = None, 
-                    url: str = None, 
-                    color: str = "white", 
+    async def embed(ctx: discord.Interaction = None,
+                    title: str = None,
+                    description: str = None,
+                    url: str = None,
+                    color: str = "white",
                     image_url: str = None):
         try:
             if not ctx.user.guild_permissions.manage_messages and embed_builder_permissions:
-                await ctx.response.send_message("You need the **Manage Messages** permission to send embeds!", 
+                await ctx.response.send_message("You need the **Manage Messages** permission to send embeds!",
                                                 ephemeral=True)
                 print(f"{ctx.user}({ctx.user.id}) lacked the permissions to send this embed: {title}, "
                       f"{description}, {url}, {color}")
@@ -169,9 +169,9 @@ if embed_builder_module:
                 except:
                     await ctx.response.send_message("I couldn't find that color!!", ephemeral=True)
                     return
-            embed = discord.Embed(title=title, 
-                                  description=description, 
-                                  url=url, 
+            embed = discord.Embed(title=title,
+                                  description=description,
+                                  url=url,
                                   color=embed_color).set_image(url=image_url)
             await ctx.response.send_message(embed=embed)
             print(f"{ctx.user}({ctx.user.id}) sent this embed: {title}, {description}, {url}, {color}, {image_url}")
@@ -186,7 +186,7 @@ if huh_module:
         try:
             print(f"{ctx.user}({ctx.user.id}) used the huh command")
             await ctx.response.send_message(content="https://tenor.com/view/huh-cat-huh-m4rtin-huh-huh-meme-what-cat"
-                                                    "-gif-13719248636774070662", 
+                                                    "-gif-13719248636774070662",
                                             ephemeral=True)
         except Exception as err:
             print(err)
@@ -276,7 +276,7 @@ if music_bot_module:
                 return
             else:
                 embed = discord.Embed(description=f"[Music]({last_url}) "
-                                                  f"was stopped by **{ctx.user.mention}**", 
+                                                  f"was stopped by **{ctx.user.mention}**",
                                       color=discord.Color.blue())
                 await last_message.edit(embed=embed, delete_after=120, view=None)
                 await ctx.response.send_message(content="Music has stopped!", ephemeral=True)
@@ -309,7 +309,7 @@ if music_bot_module:
                 print(f"{ctx.user}({ctx.user.id}) skipped a sound.")
                 return
             else:
-                embed = discord.Embed(description=f"[Music]({last_url}) was skipped by **{ctx.user.mention}**", 
+                embed = discord.Embed(description=f"[Music]({last_url}) was skipped by **{ctx.user.mention}**",
                                       color=discord.Color.blue())
                 await last_message.edit(embed=embed, delete_after=120, view=None)
                 await ctx.response.send_message(content="Music was skipped!", ephemeral=True)
@@ -418,7 +418,7 @@ if music_bot_module:
             if voice.is_playing():
                 print(f"{ctx.user}({ctx.user.id}) requested url: {url}, added to queue.")
                 await ctx.response.send_message(content=f"There's already something playing, "
-                                                        f"but I've added it to the queue!", 
+                                                        f"but I've added it to the queue!",
                                                 ephemeral=True)
             else:
                 print(f"{ctx.user} started playing url: {url} in vc {ctx.user.voice.channel.name}")
@@ -514,9 +514,9 @@ if word_counter_module:
 
 
     @slash.command(
-        name="score", 
-        description="Displays a users score, if you wanna call it that", 
-        nsfw=False, 
+        name="score",
+        description="Displays a users score, if you wanna call it that",
+        nsfw=False,
         guild=None)
     async def score(ctx: discord.Interaction, member: discord.Member = None):
         try:
@@ -533,8 +533,8 @@ if word_counter_module:
             await ctx.channel.send(content=f"Error: {err}")
 
 
-    @slash.command(name="leaderboard", description="Displays the top five users with the highest score", 
-                   nsfw=False, 
+    @slash.command(name="leaderboard", description="Displays the top five users with the highest score",
+                   nsfw=False,
                    guild=None)
     async def leaderboard(ctx: discord.Interaction):
         try:
