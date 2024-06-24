@@ -10,7 +10,6 @@ from datetime import datetime
 import json, random, asyncio, re
 from operator import itemgetter
 import matplotlib.colors as mcolors
-import re
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -426,7 +425,7 @@ if music_bot_module:
         artist = info['uploader']
         artist_id = info['uploader_id']
         duration = info['duration']
-        voice.play(FFmpegPCMAudio(URL, **ffmpeg_options))
+        voice.play(FFmpegPCMAudio(url, **ffmpeg_options))
         voice.is_playing()
         embed = discord.Embed(
             description=f"### Now Playing:\n\n**[{title}]({url})** by **[{artist}](https://www.youtube.com/{artist_id})**, requested by **{user_mention}**",
