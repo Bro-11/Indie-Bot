@@ -161,11 +161,17 @@ if embed_builder_module:
                 print(f"{ctx.user}({ctx.user.id}) lacked the permissions to send this embed: {title}, "
                       f"{description}, {url}, {color}")
                 return
+            if title is None and url is not None:
+                title = url
+            if title is None and description is None and image_url is None:
+                await ctx.response.send_message("You cannot send empty embeds!",
+                                                ephemeral=True)
+                return
             if color.isdigit():
                 embed_color = int(color)
             else:
                 try:
-                    embed_color = getColorInt(color.lower())
+                    embed_color = get_color_int(color.lower())
                 except:
                     await ctx.response.send_message("I couldn't find that color!!", ephemeral=True)
                     return
@@ -412,7 +418,6 @@ if music_bot_module:
 
             if playing_sfx:
                 voice.stop()
-                await ctx.response.send_message(content="I've stopped a sound effect to play music!", ephemeral=True)
                 print(f"{ctx.user}({ctx.user.id}) stopped a sound effect to play music.")
 
             if voice.is_playing():
@@ -443,6 +448,7 @@ if music_bot_module:
         global user_mention
         if queue.empty() or voice.is_playing():
             return
+        await asyncio.sleep(1)
         url = await queue.get()
         ydl_options = {'format': 'bestaudio', 'noplaylist': 'True'}
         ffmpeg_options = {
@@ -457,6 +463,7 @@ if music_bot_module:
         artist = info['uploader']
         artist_id = info['uploader_id']
         duration = info['duration']
+        print(f"playing: {url}")
         voice.play(FFmpegPCMAudio(url, **ffmpeg_options))
         voice.is_playing()
         embed = discord.Embed(
@@ -464,28 +471,20 @@ if music_bot_module:
                         f"by **[{artist}](https://www.youtube.com/{artist_id})**, "
                         f"requested by **{user_mention}**",
             color=discord.Color.blue())
-        view = Buttons() if playback_buttons_module else None
-        send_or_edit = dict(embed=embed, delete_after=600, view=view)
 
-        if last_message is None:
-            last_message = await text_channel.send(**send_or_edit)
+        if playback_buttons_module is False:
+            last_message = await text_channel.send(embed=embed, delete_after=duration)
         else:
-            last_message = await last_message.edit(**send_or_edit)
+            last_message = await text_channel.send(embed=embed, delete_after=duration, view=Buttons())
 
         last_url = url
         counter = 0
-        if duration:
+        if duration is not None:
             while counter < duration or not voice.is_playing():
                 if skip == 1:
                     break
-                await asyncio.sleep(0.5)
-                counter += 0.5
-        embed = discord.Embed(
-            description=f"### Finished playing:\n\n**[{TITLE}]({url})**"
-                        f" by **[{ARTIST}](https://www.youtube.com/{ARTIST_ID})**, "
-                        f"requested by **{user_mention}**",
-            color=discord.Color.blue())
-        last_message = await last_message.edit(embed=embed, delete_after=600)
+                await asyncio.sleep(1)
+                counter += 1
 
 # Tracks how many times users say a certain word
 if word_counter_module:
