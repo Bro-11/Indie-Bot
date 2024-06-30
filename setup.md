@@ -24,7 +24,7 @@ At the [Discord developer portal](https://discord.com/developers/applications):
 6. Give the bot the **Administrator** permission as well.  
 7. Click the **Bot** tab on the left side of the page.  
 8. Under **Authorization Flow**, enable **Public Bot**.  
-9. Under **Presence Intent**, enable all presence intents.
+9. Under **Privelaged Gateway Intents**, enable **Presence Intent** and **Server Members Intent**.
   
 #### Environment Variables
 * Go generate and/or find your bot token at the [Discord developer portal](https://discord.com/developers/applications).  
