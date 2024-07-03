@@ -592,39 +592,38 @@ async def on_ready():
             total_members += server.member_count
         repeat_time = math.ceil((total_members / 20) + 30)
         print(f"Total Members: {total_members}, it will take {repeat_time} seconds to process them.")
-
-    @tasks.loop(seconds=repeat_time)
+        
     async def update_roles():
-        try:
-            for server in client.guilds:
-                batch_number = 0
-                for members_chunk in chunks(server.members):
-                    for member in members_chunk:
-                        if member.bot:
-                            continue
-                        for status, role_name in role_mapping.items():
-                            role = discord.utils.get(server.roles, name=role_name)
-
-                            if role is None:
+        while True:
+            try:
+                for server in client.guilds:
+                    batch_number = 0
+                    for members_chunk in chunks(server.members):
+                        for member in members_chunk:
+                            if member.bot:
                                 continue
+                            for status, role_name in role_mapping.items():
+                                role = discord.utils.get(server.roles, name=role_name)
 
-                            if role in member.roles and member.status != status:
-                                await member.remove_roles(role)
-                            elif role not in member.roles and member.status == status:
-                                await member.add_roles(role)
-                    print(f"[{datetime.now().strftime("%I:%M %p")}] Updated roles for group in guild: {server} "
-                          f"(Batch {batch_number + 1})")
-                    await asyncio.sleep(1)  # wait 1 second between processing each group
-                    batch_number += 1
-        except Exception as e:
-            print(f"An error occurred: {e}")
+                                if role is None:
+                                    continue
 
-    @update_roles.before_loop
-    async def before_update_roles():
-        await client.wait_until_ready()
+                                if role in member.roles and member.status != status:
+                                    await member.remove_roles(role)
+                                elif role not in member.roles and member.status == status:
+                                    await member.add_roles(role)
+                        print(f"[{datetime.now().strftime("%I:%M %p")}] Updated roles for group in guild: {server} "
+                              f"(Batch {batch_number + 1})")
+                        await asyncio.sleep(1)  # wait 1 second between processing each group
+                        batch_number += 1
+            except Exception as e:
+                print(f"An error occurred: {e}")
+            await asyncio.sleep(repeat_time)  # Sleep for repeat_time seconds before updating roles again.
 
     if presence_roles_module:
-        update_repeat_time.start()
-        update_roles.start()
-    play_queue.start()
+        await update_repeat_time()  # Ensure this completes at least once before starting the roles update.
+        update_repeat_time.start()  # Start the loop for repeat_time updates.
+        await client.loop.create_task(update_roles())  # Start the roles update task.
+    if music_bot_module:
+        play_queue.start()
 client.run(TOKEN)
