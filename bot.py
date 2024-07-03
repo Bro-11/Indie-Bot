@@ -7,7 +7,7 @@ from discord import FFmpegPCMAudio, app_commands
 from yt_dlp import YoutubeDL
 from itertools import islice
 from datetime import datetime
-import json, random, asyncio, re
+import json, random, asyncio, re, math
 from operator import itemgetter
 import matplotlib.colors as mcolors
 
@@ -15,8 +15,10 @@ load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('DISCORD_GUILD')
 NWORD = os.getenv('NWORD')
-DIR = os.getenv('DIRECTORY')
-client = discord.Client(intents=discord.Intents.all())
+intents = discord.Intents.default()
+intents.members = True
+intents.presences = True
+client = discord.Client(intents=intents)
 slash = app_commands.CommandTree(client, fallback_to_global=True)
 last_message = None
 last_url = None
@@ -26,6 +28,7 @@ text_channel = None
 user_mention = None
 skip = 0
 playing_sfx = False
+repeat_time = 300
 
 
 # ---------------------------------------------
@@ -576,15 +579,25 @@ async def on_ready():
         discord.Status.offline: "Offline",
     }
 
-    def chunks(data, size=25):
+    def chunks(data, size=20):
         iterator = iter(data)
         for first in range(0, len(data), size):
             yield list(islice(iterator, size))
 
-    @tasks.loop(minutes=5)
+    @tasks.loop(hours=1)
+    async def update_repeat_time():
+        global repeat_time
+        total_members = 0
+        for server in client.guilds:
+            total_members += server.member_count
+        repeat_time = math.ceil((total_members / 20) + 30)
+        print(f"Total Members: {total_members}, it will take {repeat_time} seconds to process them.")
+
+    @tasks.loop(seconds=repeat_time)
     async def update_roles():
         try:
             for server in client.guilds:
+                batch_number = 0
                 for members_chunk in chunks(server.members):
                     for member in members_chunk:
                         if member.bot:
@@ -599,8 +612,10 @@ async def on_ready():
                                 await member.remove_roles(role)
                             elif role not in member.roles and member.status == status:
                                 await member.add_roles(role)
-                    print(f"[{datetime.now().strftime("%I:%M %p")}] Updated roles for group in guild: {server}")
+                    print(f"[{datetime.now().strftime("%I:%M %p")}] Updated roles for group in guild: {server} "
+                          f"(Batch {batch_number + 1})")
                     await asyncio.sleep(1)  # wait 1 second between processing each group
+                    batch_number += 1
         except Exception as e:
             print(f"An error occurred: {e}")
 
@@ -609,6 +624,7 @@ async def on_ready():
         await client.wait_until_ready()
 
     if presence_roles_module:
+        update_repeat_time.start()
         update_roles.start()
     play_queue.start()
 client.run(TOKEN)
