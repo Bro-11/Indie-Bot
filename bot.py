@@ -442,52 +442,54 @@ if music_bot_module:
             await ctx.channel.send(content=f"Error: {err}")
 
 
-    @tasks.loop(seconds=2)
+    # @tasks.loop(seconds=2)
     async def play_queue():
         global queue
         global last_message
         global last_url
         global voice
         global user_mention
-        if queue.empty() or voice.is_playing():
-            return
-        await asyncio.sleep(1)
-        url = await queue.get()
-        ydl_options = {'format': 'bestaudio', 'noplaylist': 'True'}
-        ffmpeg_options = {
-            'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
-            'options': '-vn'
-        }
-        with YoutubeDL(ydl_options) as ydl:
-            info = ydl.extract_info(url, download=False)
-            # print(info)
-        url = info['url']
-        title = info['title']
-        artist = info['uploader']
-        artist_id = info['uploader_id']
-        duration = info['duration']
-        print(f"playing: {url}")
-        voice.play(FFmpegPCMAudio(url, **ffmpeg_options))
-        voice.is_playing()
-        embed = discord.Embed(
-            description=f"### Now Playing:\n\n**[{title}]({url})** "
-                        f"by **[{artist}](https://www.youtube.com/{artist_id})**, "
-                        f"requested by **{user_mention}**",
-            color=discord.Color.blue())
-
-        if playback_buttons_module is False:
-            last_message = await text_channel.send(embed=embed, delete_after=duration)
-        else:
-            last_message = await text_channel.send(embed=embed, delete_after=duration, view=Buttons())
-
-        last_url = url
-        counter = 0
-        if duration is not None:
-            while counter < duration or not voice.is_playing():
-                if skip == 1:
-                    break
-                await asyncio.sleep(1)
-                counter += 1
+        while True:
+            if queue.empty() or voice.is_playing():
+                return
+            await asyncio.sleep(1)
+            url = await queue.get()
+            ydl_options = {'format': 'bestaudio', 'noplaylist': 'True'}
+            ffmpeg_options = {
+                'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
+                'options': '-vn'
+            }
+            with YoutubeDL(ydl_options) as ydl:
+                info = ydl.extract_info(url, download=False)
+                # print(info)
+            url = info['url']
+            title = info['title']
+            artist = info['uploader']
+            artist_id = info['uploader_id']
+            duration = info['duration']
+            print(f"playing: {url}")
+            voice.play(FFmpegPCMAudio(url, **ffmpeg_options))
+            voice.is_playing()
+            embed = discord.Embed(
+                description=f"### Now Playing:\n\n**[{title}]({url})** "
+                            f"by **[{artist}](https://www.youtube.com/{artist_id})**, "
+                            f"requested by **{user_mention}**",
+                color=discord.Color.blue())
+    
+            if playback_buttons_module is False:
+                last_message = await text_channel.send(embed=embed, delete_after=duration)
+            else:
+                last_message = await text_channel.send(embed=embed, delete_after=duration, view=Buttons())
+    
+            last_url = url
+            counter = 0
+            if duration is not None:
+                while counter < duration or not voice.is_playing():
+                    if skip == 1:
+                        break
+                    await asyncio.sleep(1)
+                    counter += 1
+            await asyncio.sleep(2)
 
 # Tracks how many times users say a certain word
 if word_counter_module:
@@ -591,8 +593,8 @@ async def on_ready():
         for server in client.guilds:
             total_members += server.member_count
         repeat_time = math.ceil((total_members / 20) + 30)
-        print(f"Total Members: {total_members}, it will take {repeat_time} seconds to process them.")
-        
+        print(f"Total Members: {total_members}, it will take {repeat_time} seconds to process them (Includes 30 second buffer)")
+
     async def update_roles():
         while True:
             try:
@@ -612,7 +614,7 @@ async def on_ready():
                                     await member.remove_roles(role)
                                 elif role not in member.roles and member.status == status:
                                     await member.add_roles(role)
-                        print(f"[{datetime.now().strftime("%I:%M %p")}] Updated roles for group in guild: {server} "
+                        print(f"[{datetime.now().strftime("%I:%M:%S %p")}] Updated roles for group in guild: {server} "
                               f"(Batch {batch_number + 1})")
                         await asyncio.sleep(1)  # wait 1 second between processing each group
                         batch_number += 1
@@ -625,5 +627,6 @@ async def on_ready():
         update_repeat_time.start()  # Start the loop for repeat_time updates.
         await client.loop.create_task(update_roles())  # Start the roles update task.
     if music_bot_module:
-        play_queue.start()
+        # play_queue.start()
+        await client.loop.create_task(play_queue())
 client.run(TOKEN)
