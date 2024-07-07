@@ -11,7 +11,12 @@ I'll be using PyCharm for this guide.
 #### You can't run it without these
 Press ALT+F12 to open up the console.  
 Paste in this and click enter:
-``pip install discord.py os yt-dlp itertools asyncio matplotlib``
+``pip install discord.py os yt-dlp itertools asyncio matplotlib``  
+
+You need **ffmpeg.exe** which you can download [here](https://www.gyan.dev/ffmpeg/builds/).  
+1. Download the **ffmpeg-git-full.7z**.  
+2. Unzip the file and find **ffmpeg.exe** in the **bin** folder.  
+3. Drag **ffmpeg.exe** into the same directory as **bot.py**.  
 
 ### Configure and Provide Token
 #### Configuration
