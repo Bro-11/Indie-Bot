@@ -62,6 +62,9 @@ word_counter_module = True
 # Assigns roles based on the server user's presence (online, idle, do not disturb, etc)
 # Make sure there are roles called "Online", "Idle", "Do Not Disturb", and "Offline"
 presence_roles_module = True
+# How many seconds to add to the repetition timer, to allow members to join between the 1-hour timer.
+# 25 seconds is a 500 member buffer. If your server gains more than 500 members an hour, increase this.
+buffer = 25
 
 # Gives the bot a fun activity to play on its profile, purely cosmetic
 fun_activity_module = True
@@ -475,12 +478,12 @@ if music_bot_module:
                             f"by **[{artist}](https://www.youtube.com/{artist_id})**, "
                             f"requested by **{user_mention}**",
                 color=discord.Color.blue())
-    
+
             if playback_buttons_module is False:
                 last_message = await text_channel.send(embed=embed, delete_after=duration)
             else:
                 last_message = await text_channel.send(embed=embed, delete_after=duration, view=Buttons())
-    
+
             last_url = url
             counter = 0
             if duration is not None:
@@ -592,14 +595,19 @@ async def on_ready():
         total_members = 0
         for server in client.guilds:
             total_members += server.member_count
-        repeat_time = math.ceil((total_members / 20) + 30)
-        print(f"Total Members: {total_members}, it will take {repeat_time} seconds to process them (Includes 30 second buffer)")
+        repeat_time = math.ceil((total_members / 20) + buffer)
+        # The + 20 is a buffer, to prevent being rate-limited.
+        # If your server gains more than 500 members an hour, you may need to increase this buffer
+        print(f"Total Members: {total_members}, it will take {repeat_time} seconds to process them (Includes {buffer} second buffer)")
 
     async def update_roles():
         while True:
             try:
+                total_servers = len(client.guilds)
+                current_server = 1
                 for server in client.guilds:
                     batch_number = 0
+                    total_batches = math.ceil(server.member_count / 20)
                     for members_chunk in chunks(server.members):
                         for member in members_chunk:
                             if member.bot:
@@ -614,10 +622,11 @@ async def on_ready():
                                     await member.remove_roles(role)
                                 elif role not in member.roles and member.status == status:
                                     await member.add_roles(role)
-                        print(f"[{datetime.now().strftime("%I:%M:%S %p")}] Updated roles for group in guild: {server} "
-                              f"(Batch {batch_number + 1})")
+                        print(f"[{datetime.now().strftime("%I:%M:%S %p")}] ({current_server}/{total_servers}) Updated presence roles in guild: {server} "
+                              f"(Batch {batch_number + 1}/{total_batches})")
                         await asyncio.sleep(1)  # wait 1 second between processing each group
                         batch_number += 1
+                    current_server += 1
             except Exception as e:
                 print(f"An error occurred: {e}")
             await asyncio.sleep(repeat_time)  # Sleep for repeat_time seconds before updating roles again.
