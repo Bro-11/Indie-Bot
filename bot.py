@@ -49,7 +49,7 @@ embed_builder_permissions = True
 huh_module = True
 
 # /play, /stop, /skip, /pause, /resume to control the music bot
-music_bot_module = True
+music_bot_module = False
 
 # Add buttons to control music playback of the music bot
 # Requires the music_bot_module to be enabled
@@ -57,7 +57,7 @@ playback_buttons_module = True
 
 # Watches and tracks how many times users say a certain word
 # By default, this is set to the n-word. You can change the word in the .env file
-word_counter_module = True
+word_counter_module = False
 
 # Assigns roles based on the server user's presence (online, idle, do not disturb, etc)
 # Make sure there are roles called "Online", "Idle", "Do Not Disturb", and "Offline"
@@ -115,10 +115,7 @@ if soundboard_module:
                                                 ephemeral=True,
                                                 delete_after=5)
                 print(f"{ctx.user}({ctx.user.id}) tried to play a sound, but one was already playing!")
-            if not voice.is_connected():
-                while not voice.is_connected():
-                    await asyncio.sleep(1)
-
+            
             # sfx check
             try:
                 open(f'sfx/{sfx}.mp3')
@@ -418,9 +415,6 @@ if music_bot_module:
                     voice.move_to(channel=channel)
             else:
                 voice = await channel.connect()
-            if not voice.is_connected():
-                while not voice.is_connected():
-                    await asyncio.sleep(1)
 
             if playing_sfx:
                 voice.stop()
@@ -456,43 +450,47 @@ if music_bot_module:
             if queue.empty() or voice.is_playing():
                 return
             await asyncio.sleep(1)
-            url = await queue.get()
-            ydl_options = {'format': 'bestaudio', 'noplaylist': 'True'}
-            ffmpeg_options = {
-                'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
-                'options': '-vn'
-            }
-            with YoutubeDL(ydl_options) as ydl:
-                info = ydl.extract_info(url, download=False)
-                # print(info)
-            url = info['url']
-            title = info['title']
-            artist = info['uploader']
-            artist_id = info['uploader_id']
-            duration = info['duration']
-            print(f"playing: {url}")
-            voice.play(FFmpegPCMAudio(url, **ffmpeg_options))
-            voice.is_playing()
-            embed = discord.Embed(
-                description=f"### Now Playing:\n\n**[{title}]({url})** "
-                            f"by **[{artist}](https://www.youtube.com/{artist_id})**, "
-                            f"requested by **{user_mention}**",
-                color=discord.Color.blue())
+            try:
+                url = await queue.get()
+                ydl_options = {'format': 'bestaudio', 'noplaylist': 'True'}
+                ffmpeg_options = {
+                    'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
+                    'options': '-vn'
+                }
+                with YoutubeDL(ydl_options) as ydl:
+                    info = ydl.extract_info(url, download=False)
+                    # print(info)
+                url = info['url']
+                title = info['title']
+                artist = info['uploader']
+                artist_id = info['uploader_id']
+                duration = info['duration']
+                print(f"playing: {url}")
+                voice.play(FFmpegPCMAudio(url, **ffmpeg_options))
+                voice.is_playing()
+                embed = discord.Embed(
+                    description=f"### Now Playing:\n\n**[{title}]({url})** "
+                                f"by **[{artist}](https://www.youtube.com/{artist_id})**, "
+                                f"requested by **{user_mention}**",
+                    color=discord.Color.blue())
 
-            if playback_buttons_module is False:
-                last_message = await text_channel.send(embed=embed, delete_after=duration)
-            else:
-                last_message = await text_channel.send(embed=embed, delete_after=duration, view=Buttons())
+                if playback_buttons_module is False:
+                    last_message = await text_channel.send(embed=embed, delete_after=duration)
+                else:
+                    last_message = await text_channel.send(embed=embed, delete_after=duration, view=Buttons())
 
-            last_url = url
-            counter = 0
-            if duration is not None:
-                while counter < duration or not voice.is_playing():
-                    if skip == 1:
-                        break
-                    await asyncio.sleep(1)
-                    counter += 1
-            await asyncio.sleep(2)
+                last_url = url
+                counter = 0
+                if duration is not None:
+                    while counter < duration or not voice.is_playing():
+                        if skip == 1:
+                            break
+                        await asyncio.sleep(1)
+                        counter += 1
+                await asyncio.sleep(2)
+            except Exception as err:
+                print(err)
+                await text_channel.send(content=f"Error: {err}")
 
 # Tracks how many times users say a certain word
 if word_counter_module:
@@ -596,7 +594,7 @@ async def on_ready():
         for server in client.guilds:
             total_members += server.member_count
         repeat_time = math.ceil((total_members / 20) + buffer)
-        # The + 20 is a buffer, to prevent being rate-limited.
+        # The + 25 is a buffer, to prevent being rate-limited.
         # If your server gains more than 500 members an hour, you may need to increase this buffer
         print(f"Total Members: {total_members}, it will take {repeat_time} seconds to process them (Includes {buffer} second buffer)")
 
