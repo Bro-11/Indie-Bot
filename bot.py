@@ -180,12 +180,13 @@ if embed_builder_module:
                 return
 
         try:
-            if not ctx.user.guild_permissions.manage_messages and embed_builder_permissions or ctx.user.id != owner_id:
-                await ctx.response.send_message("You need the **Manage Messages** permission to send embeds!",
-                                                ephemeral=True)
-                print(f"{ctx.user}({ctx.user.id}) lacked the permissions to send this embed: {title}, "
-                      f"{description}, {url}, {color}")
-                return
+            if ctx.user.id != owner_id:
+                if not ctx.user.guild_permissions.manage_messages and embed_builder_permissions:
+                    await ctx.response.send_message("You need the **Manage Messages** permission to send embeds!",
+                                                    ephemeral=True)
+                    print(f"{ctx.user}({ctx.user.id}) lacked the permissions to send this embed: {title}, "
+                          f"{description}, {url}, {color}")
+                    return
             if title is None and url is not None:
                 title = url
             if title is None and description is None and image_url is None:
