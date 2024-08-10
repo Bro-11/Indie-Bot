@@ -50,7 +50,7 @@ embed_builder_permissions = True
 huh_module = True
 
 # /play, /stop, /skip, /pause, /resume to control the music bot
-music_bot_module = False
+music_bot_module = True
 
 # Add buttons to control music playback of the music bot
 # Requires the music_bot_module to be enabled
@@ -101,6 +101,7 @@ if soundboard_module:
         if not bot_enabled:
             if ctx.user.id != owner_id:
                 await ctx.response.send_message(content="Bot is disabled!", ephemeral=True)
+                print(f"{ctx.user}({ctx.user.id}) tried to use a command while the bot was disabled!")
                 return
 
         try:
@@ -175,10 +176,11 @@ if embed_builder_module:
         if not bot_enabled:
             if ctx.user.id != owner_id:
                 await ctx.response.send_message(content="Bot is disabled!", ephemeral=True)
+                print(f"{ctx.user}({ctx.user.id}) tried to use a command while the bot was disabled!")
                 return
 
         try:
-            if not ctx.user.guild_permissions.manage_messages and embed_builder_permissions:
+            if not ctx.user.guild_permissions.manage_messages and embed_builder_permissions or ctx.user.id != owner_id:
                 await ctx.response.send_message("You need the **Manage Messages** permission to send embeds!",
                                                 ephemeral=True)
                 print(f"{ctx.user}({ctx.user.id}) lacked the permissions to send this embed: {title}, "
@@ -217,6 +219,7 @@ if huh_module:
         if not bot_enabled:
             if ctx.user.id != owner_id:
                 await ctx.response.send_message(content="Bot is disabled!", ephemeral=True)
+                print(f"{ctx.user}({ctx.user.id}) tried to use a command while the bot was disabled!")
                 print(ctx.user.id)
                 return
 
@@ -249,6 +252,7 @@ if music_bot_module:
         if not bot_enabled:
             if ctx.user.id != owner_id:
                 await ctx.response.send_message(content="Bot is disabled!", ephemeral=True)
+                print(f"{ctx.user}({ctx.user.id}) tried to use a command while the bot was disabled!")
                 return
 
         try:
@@ -281,6 +285,7 @@ if music_bot_module:
         if not bot_enabled:
             if ctx.user.id != owner_id:
                 await ctx.response.send_message(content="Bot is disabled!", ephemeral=True)
+                print(f"{ctx.user}({ctx.user.id}) tried to use a command while the bot was disabled!")
                 return
 
         try:
@@ -313,6 +318,7 @@ if music_bot_module:
         if not bot_enabled:
             if ctx.user.id != owner_id:
                 await ctx.response.send_message(content="Bot is disabled!", ephemeral=True)
+                print(f"{ctx.user}({ctx.user.id}) tried to use a command while the bot was disabled!")
                 return
 
         global queue
@@ -353,6 +359,7 @@ if music_bot_module:
         if not bot_enabled:
             if ctx.user.id != owner_id:
                 await ctx.response.send_message(content="Bot is disabled!", ephemeral=True)
+                print(f"{ctx.user}({ctx.user.id}) tried to use a command while the bot was disabled!")
                 return
 
         global queue
@@ -454,6 +461,7 @@ if music_bot_module:
         if not bot_enabled:
             if ctx.user.id != owner_id:
                 await ctx.response.send_message(content="Bot is disabled!", ephemeral=True)
+                print(f"{ctx.user}({ctx.user.id}) tried to use a command while the bot was disabled!")
                 return
 
         try:
@@ -593,6 +601,7 @@ if word_counter_module:
         if not bot_enabled:
             if ctx.user.id != owner_id:
                 await ctx.response.send_message(content="Bot is disabled!", ephemeral=True)
+                print(f"{ctx.user}({ctx.user.id}) tried to use a command while the bot was disabled!")
                 return
 
         try:
@@ -618,6 +627,7 @@ if word_counter_module:
         if not bot_enabled:
             if ctx.user.id != owner_id:
                 await ctx.response.send_message(content="Bot is disabled!", ephemeral=True)
+                print(f"{ctx.user}({ctx.user.id}) tried to use a command while the bot was disabled!")
                 return
 
         try:
@@ -648,6 +658,8 @@ if bot_deactivation_module:
                 await ctx.response.send_message(content="Bot is enabled!", ephemeral=True)
         else:
             await ctx.response.send_message(content="You aren't the owner of the bot!", ephemeral=True)
+            print(f"{ctx.user}({ctx.user.id}) tried to toggle the bot, but wasn't the owner!")
+
 
 @client.event
 async def on_ready():
