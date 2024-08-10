@@ -29,6 +29,7 @@ user_mention = None
 skip = 0
 playing_sfx = False
 repeat_time = 300
+bot_enabled = True
 
 
 # ---------------------------------------------
@@ -53,7 +54,7 @@ music_bot_module = False
 
 # Add buttons to control music playback of the music bot
 # Requires the music_bot_module to be enabled
-playback_buttons_module = True
+playback_buttons_module = False
 
 # Watches and tracks how many times users say a certain word
 # By default, this is set to the n-word. You can change the word in the .env file
@@ -68,6 +69,11 @@ buffer = 25
 
 # Gives the bot a fun activity to play on its profile, purely cosmetic
 fun_activity_module = True
+
+# Allows the owner to disable the bot
+bot_deactivation_module = True
+# User ID of the owner of the bot
+owner_id = 000000000000000000
 # ---------------------------------------------
 
 # Soundboard command
@@ -90,6 +96,13 @@ if soundboard_module:
     @slash.command(name="sfx", description="Plays a sound effect in your voice channel", nsfw=False, guild=None)
     @app_commands.autocomplete(sfx=sounds)
     async def sfx(ctx: discord.Interaction, sfx: str):
+        global bot_enabled
+        global owner_id
+        if not bot_enabled:
+            if ctx.user.id != owner_id:
+                await ctx.response.send_message(content="Bot is disabled!", ephemeral=True)
+                return
+
         try:
             global playing_sfx
             sfx = sfx.lower()
@@ -115,7 +128,7 @@ if soundboard_module:
                                                 ephemeral=True,
                                                 delete_after=5)
                 print(f"{ctx.user}({ctx.user.id}) tried to play a sound, but one was already playing!")
-            
+
             # sfx check
             try:
                 open(f'sfx/{sfx}.mp3')
@@ -157,6 +170,13 @@ if embed_builder_module:
                     url: str = None,
                     color: str = "white",
                     image_url: str = None):
+        global bot_enabled
+        global owner_id
+        if not bot_enabled:
+            if ctx.user.id != owner_id:
+                await ctx.response.send_message(content="Bot is disabled!", ephemeral=True)
+                return
+
         try:
             if not ctx.user.guild_permissions.manage_messages and embed_builder_permissions:
                 await ctx.response.send_message("You need the **Manage Messages** permission to send embeds!",
@@ -192,6 +212,14 @@ if embed_builder_module:
 if huh_module:
     @slash.command(name="huh", nsfw=False, guild=None)
     async def mystery(ctx: discord.Interaction):
+        global bot_enabled
+        global owner_id
+        if not bot_enabled:
+            if ctx.user.id != owner_id:
+                await ctx.response.send_message(content="Bot is disabled!", ephemeral=True)
+                print(ctx.user.id)
+                return
+
         try:
             print(f"{ctx.user}({ctx.user.id}) used the huh command")
             await ctx.response.send_message(content="https://tenor.com/view/huh-cat-huh-m4rtin-huh-huh-meme-what-cat"
@@ -216,6 +244,13 @@ if music_bot_module:
     # command to resume voice if it is paused
     @slash.command(name="resume", description="Resumes playback", nsfw=False, guild=None)
     async def resume(ctx: discord.Interaction):
+        global bot_enabled
+        global owner_id
+        if not bot_enabled:
+            if ctx.user.id != owner_id:
+                await ctx.response.send_message(content="Bot is disabled!", ephemeral=True)
+                return
+
         try:
             try:
                 channel = ctx.user.voice.channel
@@ -241,6 +276,13 @@ if music_bot_module:
 
     @slash.command(name="pause", description="Pauses playback", nsfw=False, guild=None)
     async def pause(ctx: discord.Interaction):
+        global bot_enabled
+        global owner_id
+        if not bot_enabled:
+            if ctx.user.id != owner_id:
+                await ctx.response.send_message(content="Bot is disabled!", ephemeral=True)
+                return
+
         try:
             try:
                 channel = ctx.user.voice.channel
@@ -266,6 +308,13 @@ if music_bot_module:
 
     @slash.command(name="stop", description="Stops playback", nsfw=False, guild=None)
     async def stop(ctx: discord.Interaction):
+        global bot_enabled
+        global owner_id
+        if not bot_enabled:
+            if ctx.user.id != owner_id:
+                await ctx.response.send_message(content="Bot is disabled!", ephemeral=True)
+                return
+
         global queue
         try:
             try:
@@ -299,6 +348,13 @@ if music_bot_module:
 
     @slash.command(name="skip", description="Skips the current song", nsfw=False, guild=None)
     async def skip(ctx: discord.Interaction):
+        global bot_enabled
+        global owner_id
+        if not bot_enabled:
+            if ctx.user.id != owner_id:
+                await ctx.response.send_message(content="Bot is disabled!", ephemeral=True)
+                return
+
         global queue
         global skip
         try:
@@ -393,6 +449,13 @@ if music_bot_module:
 
     @slash.command(name="play", description="Plays music in your voice channel", nsfw=False, guild=None)
     async def play(ctx: discord.Interaction, url: str):
+        global bot_enabled
+        global owner_id
+        if not bot_enabled:
+            if ctx.user.id != owner_id:
+                await ctx.response.send_message(content="Bot is disabled!", ephemeral=True)
+                return
+
         try:
             global queue
             global text_channel
@@ -446,6 +509,7 @@ if music_bot_module:
         global last_url
         global voice
         global user_mention
+        global skip
         while True:
             if queue.empty() or voice.is_playing():
                 return
@@ -524,6 +588,13 @@ if word_counter_module:
         nsfw=False,
         guild=None)
     async def score(ctx: discord.Interaction, member: discord.Member = None):
+        global bot_enabled
+        global owner_id
+        if not bot_enabled:
+            if ctx.user.id != owner_id:
+                await ctx.response.send_message(content="Bot is disabled!", ephemeral=True)
+                return
+
         try:
             if ctx.guild is None or member is None:  # the command is used in a dm
                 member = ctx.user
@@ -542,6 +613,13 @@ if word_counter_module:
                    nsfw=False,
                    guild=None)
     async def leaderboard(ctx: discord.Interaction):
+        global bot_enabled
+        global owner_id
+        if not bot_enabled:
+            if ctx.user.id != owner_id:
+                await ctx.response.send_message(content="Bot is disabled!", ephemeral=True)
+                return
+
         try:
             leaderboard = sorted(waffles_counter.items(), key=itemgetter(1), reverse=True)[:5]
             if ctx.guild is None:  # It's used in a dm
@@ -556,6 +634,20 @@ if word_counter_module:
             print(err)
             await ctx.channel.send(content=f"Error: {err}")
 
+if bot_deactivation_module:
+    @slash.command(name="toggle-bot", description="Allows the bot owner to enable/disable the bot", nsfw=False, guild=None)
+    async def toggle_bot(ctx: discord.Interaction):
+        global bot_enabled
+        global owner_id
+        if ctx.user.id == owner_id:
+            if bot_enabled:
+                bot_enabled = False
+                await ctx.response.send_message(content="Bot is disabled!", ephemeral=True)
+            else:
+                bot_enabled = True
+                await ctx.response.send_message(content="Bot is enabled!", ephemeral=True)
+        else:
+            await ctx.response.send_message(content="You aren't the owner of the bot!", ephemeral=True)
 
 @client.event
 async def on_ready():
@@ -588,7 +680,7 @@ async def on_ready():
             yield list(islice(iterator, size))
 
     @tasks.loop(hours=1)
-    async def update_repeat_time():
+    async def update_repeat_time(logging: bool = True):
         global repeat_time
         total_members = 0
         for server in client.guilds:
@@ -596,7 +688,8 @@ async def on_ready():
         repeat_time = math.ceil((total_members / 20) + buffer)
         # The + 25 is a buffer, to prevent being rate-limited.
         # If your server gains more than 500 members an hour, you may need to increase this buffer
-        print(f"Total Members: {total_members}, it will take {repeat_time} seconds to process them (Includes {buffer} second buffer)")
+        if logging:
+            print(f"Total Members: {total_members}, it will take {repeat_time} seconds to process them (Includes {buffer} second buffer)")
 
     async def update_roles():
         while True:
@@ -630,10 +723,11 @@ async def on_ready():
             await asyncio.sleep(repeat_time)  # Sleep for repeat_time seconds before updating roles again.
 
     if presence_roles_module:
-        await update_repeat_time()  # Ensure this completes at least once before starting the roles update.
+        await update_repeat_time(logging=False)  # Ensure this completes at least once before starting the roles update.
         update_repeat_time.start()  # Start the loop for repeat_time updates.
+        await asyncio.sleep(1)
         await client.loop.create_task(update_roles())  # Start the roles update task.
     if music_bot_module:
-        # play_queue.start()
         await client.loop.create_task(play_queue())
+
 client.run(TOKEN)
