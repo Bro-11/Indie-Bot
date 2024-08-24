@@ -13,7 +13,6 @@ import matplotlib.colors as mcolors
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
-GUILD = os.getenv('DISCORD_GUILD')
 NWORD = os.getenv('NWORD')
 intents = discord.Intents.default()
 intents.members = True
@@ -26,6 +25,7 @@ queue = asyncio.Queue()
 voice = None
 text_channel = None
 user_mention = None
+last_sfx = None
 skip = 0
 playing_sfx = False
 repeat_time = 300
@@ -72,7 +72,6 @@ fun_activity_module = True
 
 # Allows the owner to disable the bot
 bot_deactivation_module = True
-# User ID of the owner of the bot
 owner_id = 000000000000000000
 # ---------------------------------------------
 
@@ -92,18 +91,19 @@ if soundboard_module:
 
     # Remember to create a folder in the same folder as bot.py named sfx
 
-
     @slash.command(name="sfx", description="Plays a sound effect in your voice channel", nsfw=False, guild=None)
     @app_commands.autocomplete(sfx=sounds)
-    async def sfx(ctx: discord.Interaction, sfx: str):
+    async def sfx(ctx: discord.Interaction, sfx: str, message: bool = True):
         global bot_enabled
         global owner_id
+        global last_sfx
         if not bot_enabled:
             if ctx.user.id != owner_id:
                 await ctx.response.send_message(content="Bot is disabled!", ephemeral=True)
                 print(f"{ctx.user}({ctx.user.id}) tried to use a command while the bot was disabled!")
                 return
-
+        if message is None:
+            message = True
         try:
             global playing_sfx
             sfx = sfx.lower()
@@ -140,13 +140,17 @@ if soundboard_module:
                 print(f"{ctx.user.name}({ctx.user.id}) "
                       f"is playing sfx {sfx} in {ctx.user.voice.channel.name}"
                       f"({ctx.user.voice.channel.id})")
-                await ctx.response.send_message(content=f"Playing sfx: **{sfx}**", ephemeral=True, delete_after=5)
+                if message:
+                    await ctx.response.send_message(content=f"Playing sfx: **{sfx}**", ephemeral=True, delete_after=30, view=Buttons())
+                else:
+                    await ctx.response.send_message(content="Success!", ephemeral=True, delete_after=1)
                 await asyncio.sleep(1)
                 voice.play(FFmpegPCMAudio(source=f'sfx/{sfx}.mp3',
                                           executable='ffmpeg.exe',
                                           before_options=ffmpeg_options))
                 voice.is_playing()
                 playing_sfx = True
+                last_sfx = sfx
                 while voice.is_playing:
                     await asyncio.sleep(1)
                 playing_sfx = False
@@ -156,6 +160,16 @@ if soundboard_module:
         except Exception as err:
             print(err)
             await ctx.channel.send(content=f"Error: {err}")
+
+
+    class Buttons(discord.ui.View):
+        def __init__(self, timeout=180):
+            super().__init__(timeout=timeout)
+        global last_sfx
+
+        @discord.ui.button(label="Replay Sound", disabled=False, style=discord.ButtonStyle.primary, emoji="🔄")
+        async def replay_sfx(self, ctx=discord.Interaction, button=discord.ui.button):
+            await slash.get_command('sfx').callback(ctx=ctx, sfx=last_sfx, message=False)
 
 # Embed builder command
 if embed_builder_module:
@@ -665,8 +679,7 @@ if bot_deactivation_module:
 @client.event
 async def on_ready():
     for guild in client.guilds:
-        if guild.name == GUILD:
-            break
+        break
 
     # You're not supposed to do this but idrc
     await slash.sync()
@@ -694,7 +707,8 @@ async def on_ready():
 
     @tasks.loop(hours=1)
     async def update_repeat_time(logging: bool = True):
-        global repeat_time
+        if logging:
+            print(f"[{datetime.now().strftime("%I:%M:%S %p")}] Calculating buffer for presence roles...")
         total_members = 0
         for server in client.guilds:
             total_members += server.member_count
