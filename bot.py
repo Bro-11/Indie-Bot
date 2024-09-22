@@ -75,7 +75,7 @@ bot_deactivation_module = True
 owner_id = 0
 # ---------------------------------------------
 
-async def join_vc():
+async def join_vc(ctx: discord.Interaction):
     if ctx.user.guild.voice_client:
         voice = ctx.user.guild.voice_client
         if voice.channel != channel:
@@ -126,7 +126,12 @@ if soundboard_module:
                                                 delete_after=5)
                 return
 
-            voice = join_vc()
+            if ctx.user.guild.voice_client:
+                voice = ctx.user.guild.voice_client
+                if voice.channel != channel:
+                    voice.move_to(channel=channel)
+            else:
+                voice = await channel.connect()
 
             if voice.is_playing():
                 await ctx.response.send_message(content="There's already something playing!",
@@ -499,7 +504,12 @@ if music_bot_module:
                 await ctx.response.send_message(content="You aren't in a voice channel!", ephemeral=True)
                 return
 
-            voice = join_vc()
+            if ctx.user.guild.voice_client:
+                voice = ctx.user.guild.voice_client
+                if voice.channel != channel:
+                    voice.move_to(channel=channel)
+            else:
+                voice = await channel.connect()
 
             if playing_sfx:
                 voice.stop()
