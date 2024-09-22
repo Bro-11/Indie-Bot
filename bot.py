@@ -72,8 +72,17 @@ fun_activity_module = True
 
 # Allows the owner to disable the bot
 bot_deactivation_module = True
-owner_id = 000000000000000000
+owner_id = 0
 # ---------------------------------------------
+
+async def join_vc():
+    if ctx.user.guild.voice_client:
+        voice = ctx.user.guild.voice_client
+        if voice.channel != channel:
+            voice.move_to(channel=channel)
+    else:
+        voice = await channel.connect()
+    return voice
 
 # Soundboard command
 if soundboard_module:
@@ -93,7 +102,7 @@ if soundboard_module:
 
     @slash.command(name="sfx", description="Plays a sound effect in your voice channel", nsfw=False, guild=None)
     @app_commands.autocomplete(sfx=sounds)
-    async def sfx(ctx: discord.Interaction, sfx: str, message: bool = True):
+    async def sfx(ctx: discord.Interaction, sfx: str, *, message: bool = True):
         global bot_enabled
         global owner_id
         global last_sfx
@@ -117,12 +126,7 @@ if soundboard_module:
                                                 delete_after=5)
                 return
 
-            if ctx.user.guild.voice_client:
-                voice = ctx.user.guild.voice_client
-                if voice.channel != channel:
-                    voice.move_to(channel=channel)
-            else:
-                voice = await channel.connect()
+            voice = join_vc()
 
             if voice.is_playing():
                 await ctx.response.send_message(content="There's already something playing!",
@@ -495,12 +499,7 @@ if music_bot_module:
                 await ctx.response.send_message(content="You aren't in a voice channel!", ephemeral=True)
                 return
 
-            if ctx.user.guild.voice_client:
-                voice = ctx.user.guild.voice_client
-                if voice.channel != channel:
-                    voice.move_to(channel=channel)
-            else:
-                voice = await channel.connect()
+            voice = join_vc()
 
             if playing_sfx:
                 voice.stop()
@@ -676,10 +675,10 @@ if bot_deactivation_module:
             print(f"{ctx.user}({ctx.user.id}) tried to toggle the bot, but wasn't the owner!")
 
 
+
 @client.event
 async def on_ready():
-    for guild in client.guilds:
-        break
+    guild = next(iter(client.guilds), None)
 
     # You're not supposed to do this but idrc
     await slash.sync()
@@ -688,7 +687,8 @@ async def on_ready():
         games = ["with a slinky", "Poker on the last day of school", "Blackjack on the last day of school",
                  "BS on the last day of school", "Minecraft and griefing Gabe's house", "Overwatch and losing",
                  "with a rubiks cube", "soccer with an ice cube", "tic-tac-toe with ice", "Titanfall 3",
-                 "Half Life 3: Part 2", "Team Fortress 3", "Super Smash Bros Ultimate", "signs at Travis's"]
+                 "Half Life 3: Part 2", "Team Fortress 3", "Super Smash Bros Ultimate", "signs at Travis's",
+                 "Jackbox at Travis's", "with Asta (the best cat)"]
         await client.change_presence(status=discord.Status.online, activity=discord.Game(random.choice(games)))
 
     print(f'Connected to: \n{guild.name}({guild.id})')
