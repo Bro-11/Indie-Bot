@@ -1,3 +1,5 @@
+### Haven't been able to work on this in forever, gonna archive for now
+
 # Indie-Bot
 A self-hosted bot made for smaller Discord communities  
 Made to be easy to setup and even easier to use!
